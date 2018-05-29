@@ -7,50 +7,43 @@ library(Rfacebook)
 #library(plotly)
 #library(tibble)
 
-source(".\\R\\pull_fb_posts.r")
+###https://mail.google.com/mail/u/1/#inbox/163a5bcef5819280
+#JULY 6: have 1) done (for Ballarat) and presented to Rebecca by Friday July 6th.
+#Loose order of work:
+#1) Proof of concept: Posts, Post Replies, and Reactions
+#2) Appending new data to current
+#3) Going from 1 station to 12 (or 33)
+#4) Shared Posts; Reactions and Replies
+#5) Location data and maps (if possible/applicable)
+#6) Text Analysis
+
+?Rfacebook::fbOAuth
+?Rfacebook::getCommentReplies
+?Rfacebook::getLikes
+?Rfacebook::getReactions
+?Rfacebook::getShares
+?Rfacebook::getUsers
+
+?Rfacebook::getInsights #requires page admin. contains page_fans_country.
+
+source(".\\R\\pull_fb_posts.r") # get Posts
 
 token <- "EAACEdEose0cBAEM4hwfLCrIZBI1pHhtGOIaw1ejkgdhKzgG8bGVcqLNA75Jvl73AKNTQW6OVV3X56bp86GHM6A5uOkskXnZC4kmo1kfkYwavM22SvhtbgNaC81ZBsF65aSSgjDjbKCWX1sMHZAQu8JlmuLejkWz88ei5NmNC7FxXUgyivF4V0Iiacc0SCOUZD" 
 #temp token, will need to gen each time.
 #browseURL("https://developers.facebook.com/tools/explorer/?method=GET&path=me%3Ffields%3Did%2Cname&version=v3.0)")
 
+### Focus on these 12.
 #station <- cat("eyewatch",c("Wyndham", "Melton", "Whittlesea", "Cardinia", "Latrobe", "Ballarat", "Brimbank", "Greater Shepparton", "Greater Dandenong", "Frankston", "Knox", "Geelong"))
 
+### Not in focus. HUME has some 21K followers, seems fishy
 # not in email: "Monash", "Hume", "Kingston", "Latrobe", "Boroondara", "Yarra Ranges", "Bass Coast", "Warrnambool", "Casey", "Mildura", "Swan Hill", "Mornington Peninsula", "Darebin", "Moreland", "Bendigo", "Horsham", "Moorabool", "Baw Baw", "Hobsons Bay", "Benalla", "Northern Grampians"  __ anadditional 21 stations not mentioned. 33 in total
 
 s <- "eyewatchMonash, eyewatchMelton"
 pages <- s
-pull_fb_posts(s)
+file <- pull_fb_posts(s)
 
 #file <- paste0("data/eyewatch_posts_raw_", Sys.Date(),".rda")
-load(file)
-
-
-
-pull_fb_posts <- function(pages) {
-  pages <- gsub(" ", "", pages, fixed = TRUE) %>% tolower()
-  n_pages <- length(unique(pages))
-  
-  posts_raw <- NULL
-  start_time <- Sys.time()
-  for(i in 1:n_pages){
-    delta <- getPage(pages[i], token, n=25, feed = TRUE) %>% 
-      as_tibble() %>% cbind("page" = pages[i])
-    posts_raw <- rbind(posts_raw, delta)
-  } 
-  end_time <- Sys.time()
-  pull_time <- end_time - start_time 
-  pull_rows <- nrow(posts_raw)
-  file <- paste0("data/eyewatch_posts_raw_", Sys.Date(),".rda")
-  save(posts_raw, file = file)
-  
-  print(pull_rows, " posts pulled from ", n_pages, 
-        " pages. Data pulled in ", pull_time)
-  print("Data has been saved to ", file, ". The path is also returned by this function.")
-
-  return(file())
-}
-
-#save(eyewatch_posts_raw, file = "data/eyewatch_posts_raw.rda")
+load("data/eyewatch_posts_raw_2018-05-25.rda")
 
 
 ## ETL

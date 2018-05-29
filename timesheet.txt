@@ -1,0 +1,4 @@
+date,duration[hrs]
++Premeeting_on_laptop
+26/05/2018,2.5 
+29/05/2018,1.5

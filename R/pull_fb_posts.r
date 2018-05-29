@@ -19,5 +19,5 @@ pull_fb_posts <- function(pages) {
         " pages. Data pulled in ", pull_time)
   print("Data has been saved to ", file, ". The path is also returned by this function.")
   
-  return(file())
+  return(file)
 }

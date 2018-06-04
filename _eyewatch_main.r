@@ -1,11 +1,40 @@
 # Facebook Eyewatch data
 # Nicholas Spyrison 
 # May 2018
-library(dplyr)
-library(Rfacebook)
+
+#library(Rfacebook)
 #library(tidyverse)
 #library(plotly)
 #library(tibble)
+
+source("./R/pull_fb_posts.r")
+source("./R/clean_fb_posts.r")
+
+### TEMP TOKEN
+browseURL("https://developers.facebook.com/tools/explorer/?method=GET&path=me%3Ffields%3Did%2Cname&version=v3.0)")
+
+token <- "EAACEdEose0cBAFwvxqDOvzkZCMSPf2YWD91mAyUURNiFSQUBY8MooC7oOBf6QRoDMFZCuAXuIEJaX10CWYm0em2mJ8FYL5jeb3PRaxDidO452HIZAw2dbAu4Xj6nUCyRwl90XEqcoMwmKYOx0q5whYqLq4m2fM4wRnEUzHQWeY3FbqUw3N8d0ZCDQZAaruDkhHKLst1wfHQZDZD" 
+
+p <- "eyewatchBallarat"
+myFileName <-
+  pull_fb_posts(p, n_ppp=20, token = token)
+myFileName <- "data/posts_raw_2018_06_03.rda"
+clean_fb_posts(myFileName) #WILL OVERWRITE
+
+pull_fb_reactions(myFileName, token = token)
+
+load(myFileName)
+## Getting reactions for most recent post
+post <- getReactions(post=posts_raw$id[1], token=token)
+
+###toy:
+load("data/posts_raw_2018_06_03.rda")
+
+
+
+### token defaulted in func load("fb_oauth")
+#load("fb_oauth")
+#(me <- getUsers("me",token=fb_oauth))
 
 ###https://mail.google.com/mail/u/1/#inbox/163a5bcef5819280
 #JULY 6: have 1) done (for Ballarat) and presented to Rebecca by Friday July 6th.
@@ -26,11 +55,21 @@ library(Rfacebook)
 
 ?Rfacebook::getInsights #requires page admin. contains page_fans_country.
 
-source(".\\R\\pull_fb_posts.r") # get Posts
 
-token <- "EAACEdEose0cBAEM4hwfLCrIZBI1pHhtGOIaw1ejkgdhKzgG8bGVcqLNA75Jvl73AKNTQW6OVV3X56bp86GHM6A5uOkskXnZC4kmo1kfkYwavM22SvhtbgNaC81ZBsF65aSSgjDjbKCWX1sMHZAQu8JlmuLejkWz88ei5NmNC7FxXUgyivF4V0Iiacc0SCOUZD" 
-#temp token, will need to gen each time.
+
+### TEMP TOKEN
+##token <- "EAACEdEose0cBAEM4hwfLCrIZBI1pHhtGOIaw1ejkgdhKzgG8bGVcqLNA75Jvl73AKNTQW6OVV3X56bp86GHM6A5uOkskXnZC4kmo1kfkYwavM22SvhtbgNaC81ZBsF65aSSgjDjbKCWX1sMHZAQu8JlmuLejkWz88ei5NmNC7FxXUgyivF4V0Iiacc0SCOUZD" 
+##temp token, will need to gen each time.
+
 #browseURL("https://developers.facebook.com/tools/explorer/?method=GET&path=me%3Ffields%3Did%2Cname&version=v3.0)")
+
+#load("fb_oauth")
+#me <- getUsers("me",token=fb_oauth)
+#my_likes <- getLikes(user="me", token=fb_oauth)
+
+
+
+
 
 ### Focus on these 12.
 #station <- cat("eyewatch",c("Wyndham", "Melton", "Whittlesea", "Cardinia", "Latrobe", "Ballarat", "Brimbank", "Greater Shepparton", "Greater Dandenong", "Frankston", "Knox", "Geelong"))
@@ -38,33 +77,13 @@ token <- "EAACEdEose0cBAEM4hwfLCrIZBI1pHhtGOIaw1ejkgdhKzgG8bGVcqLNA75Jvl73AKNTQW
 ### Not in focus. HUME has some 21K followers, seems fishy
 # not in email: "Monash", "Hume", "Kingston", "Latrobe", "Boroondara", "Yarra Ranges", "Bass Coast", "Warrnambool", "Casey", "Mildura", "Swan Hill", "Mornington Peninsula", "Darebin", "Moreland", "Bendigo", "Horsham", "Moorabool", "Baw Baw", "Hobsons Bay", "Benalla", "Northern Grampians"  __ anadditional 21 stations not mentioned. 33 in total
 
-s <- "eyewatchMonash, eyewatchMelton"
-pages <- s
-file <- pull_fb_posts(s)
-
-#file <- paste0("data/eyewatch_posts_raw_", Sys.Date(),".rda")
-load("data/eyewatch_posts_raw_2018-05-25.rda")
 
 
-## ETL
-#TODO: renames, id's, time, datetime
-load(file = "data/eyewatch_posts_raw.rda")
-eyewatch_posts_clean <- eyewatch_posts_raw
-#eyewatch_posts_clean$from_id <- as.integer(eyewatch_posts_clean$from_id) #ALL NA after
-#eyewatch_posts_clean <- rename(eyewatch_posts_clean, created_datetime = created_time)
-#eyewatch_posts_clean <- rename(eyewatch_posts_clean, id = form_message_id)
-eyewatch_posts_clean$created_datetime <- eyewatch_posts_clean$created_time
-eyewatch_posts_clean$created_date <- substr(eyewatch_posts_clean$created_datetime, 1, 10)
-eyewatch_posts_clean$created_time <- substr(eyewatch_posts_clean$created_datetime, 11, 24)
-eyewatch_posts_clean$created_date <- as.Date(eyewatch_posts_clean$created_date, "%Y-%m-%d")
-eyewatch_posts_clean$wday <- 
-  lubridate::wday(eyewatch_posts_clean$created_date, label = TRUE)
-eyewatch_posts_clean$day0 <- 
-  as.integer(eyewatch_posts_clean$created_date-min(eyewatch_posts_clean$created_date))
-eyewatch_posts_clean$likes_count <- as.integer(eyewatch_posts_clean$likes_count)
-eyewatch_posts_clean$comments_count <- as.integer(eyewatch_posts_clean$comments_count)
-eyewatch_posts_clean$shares_count <- as.integer(eyewatch_posts_clean$shares_count)
-save(eyewatch_posts_clean, file = "data/eyewatch_posts_clean.rda")
+
+
+
+
+
 
 ## EDA
 load(file = "data/eyewatch_posts_clean.rda")

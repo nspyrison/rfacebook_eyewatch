@@ -8,20 +8,28 @@
 #library(tibble)
 
 source("./R/pull_fb_posts.r")
+source("./R/pull_fb_reactions.r")
 source("./R/clean_fb_posts.r")
+
+
+###TODO:
+# validate pull comments
+# validate clean comments
+# validate pull reactions
+
 
 ### TEMP TOKEN
 browseURL("https://developers.facebook.com/tools/explorer/?method=GET&path=me%3Ffields%3Did%2Cname&version=v3.0)")
 
-token <- "EAACEdEose0cBAFwvxqDOvzkZCMSPf2YWD91mAyUURNiFSQUBY8MooC7oOBf6QRoDMFZCuAXuIEJaX10CWYm0em2mJ8FYL5jeb3PRaxDidO452HIZAw2dbAu4Xj6nUCyRwl90XEqcoMwmKYOx0q5whYqLq4m2fM4wRnEUzHQWeY3FbqUw3N8d0ZCDQZAaruDkhHKLst1wfHQZDZD" 
+token <- "EAACEdEose0cBALYAsYI2VO5aPTKOeyd3bZAl2JR0k8T1sSUM40pb2bLuqDngVhZCuTRmUVhC7hVDO1haRZCumcXnvl39rMQA1hScRaDvZCLH2lY0GaTtZAxp0my2LWrELlQfbFpjKytz2226WWDej9ZCo2VZBwma2oeKgIuIIvvNVd0ZBlz1nP2XyxYZArN2ToFYIZC7kTbH512gZDZD" 
 
-p <- "eyewatchBallarat"
-myFileName <-
-  pull_fb_posts(p, n_ppp=20, token = token)
-myFileName <- "data/posts_raw_2018_06_03.rda"
+pages <- "eyewatchBallarat"
+myFileName <- pull_fb_posts(pages, n_ppp=20, token = token)
+#myFileName <- "data/posts_raw_2018_06_03.rda"
+myFileName <- pull_fb_reactions(myFileName, token = token)
 clean_fb_posts(myFileName) #WILL OVERWRITE
 
-pull_fb_reactions(myFileName, token = token)
+
 
 load(myFileName)
 ## Getting reactions for most recent post
@@ -29,6 +37,9 @@ post <- getReactions(post=posts_raw$id[1], token=token)
 
 ###toy:
 load("data/posts_raw_2018_06_03.rda")
+load("data/comments_raw_2018_06_03.rda")
+load("data/postsreactions_raw_2018_06_03.rda")
+load("data/posts_clean_2018_06_03.rda")
 
 
 
@@ -47,9 +58,9 @@ load("data/posts_raw_2018_06_03.rda")
 #6) Text Analysis
 
 ?Rfacebook::fbOAuth
-?Rfacebook::getCommentReplies
-?Rfacebook::getLikes
-?Rfacebook::getReactions
+?Rfacebook::getCommentReplies 
+?Rfacebook::getLikes #users likes for a page
+?Rfacebook::getReactions #reaction breakdown of a post
 ?Rfacebook::getShares
 ?Rfacebook::getUsers
 

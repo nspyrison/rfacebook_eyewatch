@@ -1,7 +1,7 @@
 ---
-title: "Eyewatch - Ballarat"
+title: "Metrics By Month PoC"
 author: "Nicholas Spyrison"
-date: "16 May, 2018"
+date: "July 2018"
 output: 
   html_document:
     self_contained: true
@@ -19,22 +19,37 @@ knitr::opts_chunk$set(
   fig.align = "center",
   cache = FALSE)
 
-library(tidyverse)
-library(plotly)
+require(Rfacebook)
+require(tidyverse)
+require(plotly)
+require(tibble)
 ```
 
-# Metadata and ploting
-
-Data pulled at 5:30pm, 16 May, 2018
-952 post from the Eyewtch - Ballarat facebook page.
-
-
-Pulled and some initial cleaning, let's dive into some basic plots.
-
+# Pull data
 ```{r}
-load(file = "data/bal_posts_clean.rda")
+stations <- "Ballarat" 
+pages <- cat("eyewatch", stations)
+token <- "EAACEdEose0cBADA5d0ZCTgRNbZAJWlxXImvlzAJqmxXhx3vghoQny8rOEO7CsJIYxRGZCFELDQiZAx9LLoQmZAmFGlX93Lp6E5aE1YDHZC6XQcESPCrV8lTKAdVX9M7wwE15h75pvxfAT36ZA67jvxSSjtZANOxdml0uLnuaE1ZCT1YXbrBz1ZC40Co3pdmi1kDdAZD" # temporary
 
-bal_posts_clean
+pull_fb_posts(pages, n_ppp=1000, token = tmpToken) -> dataFileName
+add_fb_reactions(myFileName, token = tmpToken) -> dataFileName
+clean_fb_postreactions(dataFileName) 
+
+### get filename:
+#paste0("postreactions_clean_", gsub("-", "_", Sys.Date()))
+
+### Dynamic filename
+# a = "posts_raw_2018_06_03"
+# class(parse(a))
+# eval(parse(text=head(a)))
+# 
+# eval(parse(text="5+5"))
+# a= "5+5"
+# eval(parse(text=a))
+# eval(parse(text=head(a)))
+# eval(parse(text=cat("head(",a,")",sep="")))
+
+ballarat_postreactions <- postreactions_clean_2018_07_02
 
 visdat::vis_dat(bal_posts_clean)
 
@@ -52,6 +67,8 @@ visdat::vis_dat(bal_posts_clean)
 sub <- bal_posts_clean[c("created_date", "wday", "likes_count", "comments_count", "shares_count")]
 (p4 <- GGally::ggpairs(data = sub))
 ```
+# All 12: 
+#stations <- c("Wyndham", "Melton", "Whittlesea", "Cardinia", "Latrobe", "Ballarat", "Brimbank", "Greater Shepparton", "Greater Dandenong", "Frankston", "Knox", "Geelong")
 
 ### Appendix - ETL code
 ```{r, eval=FALSE, echo=TRUE}

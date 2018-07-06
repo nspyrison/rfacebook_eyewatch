@@ -6,8 +6,7 @@ clean_fb_postreactions <- function(file) {
   require(Rfacebook)
   require(lubridate)
   
-  ###  CLEAN
-  #TODO: time (char to ts)
+  ###CLEAN
   load(file = file)
   filename = substr(file, 6, nchar(file) - 4) #SPECIFIC TO 'data/' % '.rda'
   
@@ -20,27 +19,30 @@ clean_fb_postreactions <- function(file) {
   names(pr_clean["created_time"]) <- 'created_datetime'
   pr_clean$created_datetime <- ymd_hms(pr_clean$created_time)
   pr_clean$created_date <- as.Date(pr_clean$created_datetime)
-  pr_clean$created_time <- hms(substr(pr_clean$created_datetime, 12, 19))
+  pr_clean$created_time <- substr(pr_clean$created_datetime, 12, 23)
   pr_clean$created_hour <- as.factor(substr(pr_clean$created_datetime, 12, 13))
-  pr_clean$created_date <- as.Date(pr_clean$created_datetime)
-  pr_clean$created_Year <- year(pr_clean$created_date)
-  pr_clean$created_Quarter <- quarter(pr_clean$created_date, with_year = F)
-  pr_clean$created_Month <- month(pr_clean$created_date, abbr = T)
-  pr_clean$created_Week <- week(pr_clean$created_date)
-  pr_clean$created_YearQuarter <- cat(
-    as.integer(pr_clean$created_Year), " Q", pr_clean$created_Quarter
-  )
-  pr_clean$created_YearMonth <- cat(
-    pr_clean$created_Year, " ", pr_clean$created_Month
-  )
-  pr_clean$created_YearWeek <- cat(
-    pr_clean$created_Year, " wk", pr_clean$created_Week
-  )
-  pr_clean$wday <- 
+  pr_clean$created_year <- year(pr_clean$created_date)
+  pr_clean$created_quarter <- quarter(pr_clean$created_date, with_year = F)
+  pr_clean$created_month <- month(pr_clean$created_date, abbr = T)
+  pr_clean$created_week <- week(pr_clean$created_date)
+  pr_clean$created_yearQuarter <- 
+    paste0(as.integer(pr_clean$created_year), " Q", pr_clean$created_quarter)
+  pr_clean$created_yearMonth <- 
+    paste0(pr_clean$created_year, " ", pr_clean$created_month)
+  pr_clean$created_yearMonth <- zoo::as.yearmon(tmp$created_yearMonth, "%Y %b")
+  pr_clean$created_yearWeek <- 
+    paste0(pr_clean$created_year, " wk", pr_clean$created_week)
+  pr_clean$created_weekday <- 
     wday(pr_clean$created_date, label = TRUE, week_start = 1)
   firstday <- min(pr_clean$created_date)
-  pr_clean$daysfrom0 <- 
-    as.integer(pr_clean$created_date-firstday)
+  pr_clean$post_daysfrom0 <- 
+    as.integer(pr_clean$created_date - firstday)
+  lastday <- max(pr_clean$created_date)
+  pr_clean$post_age <- 
+    as.integer(lastday - pr_clean$created_date)
+  pr_clean$post_age <- 
+    as.integer(pr_clean$created_date - firstday)
+  pr_clean$type <- as.factor(pr_clean$type)
   pr_clean$type <- as.factor(pr_clean$type)
   pr_clean$likes_count.x <- 
     as.integer(max(pr_clean$likes_count.x,pr_clean$likes_count.y))
@@ -67,11 +69,13 @@ clean_fb_postreactions <- function(file) {
   stopifnot(ncol(pr_clean) == 29)
   filename <- gsub("raw", "clean", filename)
   file <- paste0("data/", filename,".rda")
-  eval(parse(text = paste0(filename, " <- pr_clean")))
+  eval(parse(text = paste0(filename, " <- pr_clean") ) )
   save(list = filename, file = file)
   
-  print(paste0("Clean data has been saved to  ", file, ".  The filepath is 
-               also returned by this function."))
+  print(paste0("Clean data has been saved to  ", file, 
+               ".  The filepath is also returned by this function."
+               )
+        )
   return(file)
 }
 

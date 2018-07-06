@@ -1,0 +1,231 @@
+---
+title: "Eyewatch Ballarat facebook posts"
+author: "Nicholas Spyrison"
+date: "July 2018"
+output: 
+  html_document:
+    self_contained: true
+---
+```{r options, include=FALSE}
+knitr::opts_chunk$set(
+  echo=TRUE,
+  message = FALSE,
+  warning = FALSE,
+  error = FALSE, 
+  collapse = TRUE,
+  comment = "",
+  fig.height = 8,
+  fig.width = 12,
+  fig.align = "center",
+  cache = FALSE)
+
+require(Rfacebook)
+require(tidyverse)
+require(plotly)
+require(tibble)
+require(lubridate)
+
+source("./R/pull_fb_posts.r")
+source("./R/add_fb_reactions.r") # Joins reactions and saves comments.
+source("./R/clean_fb_postreactions.r")
+```
+
+The graphs below were created from the data of 952 posts of the Eyewatch Ballarat facebook page. The date was pulled on 16 May 2018.
+
+```{r, eval=F,include=F}
+# Pull data
+### API token has more hoop. quick and dirty manual work:
+load("H:/rfacebook_eyewatch/data/archive/bal_posts_raw.rda")
+tmp <- bal_posts_raw
+
+  names(tmp["created_time"]) <- 'created_datetime'
+  tmp$created_datetime <- ymd_hms(tmp$created_time)
+  tmp$created_date <- as.Date(tmp$created_datetime)
+  tmp$created_time <- substr(tmp$created_datetime, 12, 23)
+  tmp$created_hour <- as.factor(substr(tmp$created_datetime, 12, 13))
+  tmp$created_year <- year(tmp$created_date)
+  tmp$created_quarter <- quarter(tmp$created_date, with_year = F)
+  tmp$created_month <- month(tmp$created_date, abbr = T)
+  tmp$created_week <- week(tmp$created_date)
+  tmp$created_yearQuarter <- 
+    paste0(as.integer(tmp$created_year), " Q", tmp$created_quarter)
+  tmp$created_yearMonth <- 
+    paste0(tmp$created_year, " ", tmp$created_month)
+  tmp$created_yearMonth <- 
+    zoo::as.yearmon(tmp$created_yearMonth, "%Y %b")
+  tmp$created_yearWeek <- 
+    paste0(tmp$created_year, " wk", tmp$created_week)
+  tmp$created_weekday <- 
+    wday(tmp$created_date, label = TRUE, week_start = 1)
+  firstday <- min(tmp$created_date)
+  tmp$post_daysfrom0 <- 
+    as.integer(tmp$created_date - firstday)
+  lastday <- max(tmp$created_date)
+  tmp$post_age <- 
+    as.integer(lastday - tmp$created_date)
+  tmp$type <- as.factor(tmp$type)
+      tmp$likes_count <- as.integer(tmp$likes_count)
+  # tmp$likes_count.x <- 
+  #   as.integer(max(tmp$likes_count.x,tmp$likes_count.y))
+  # names(tmp)[names(tmp) == 'likes_count.x'] <- 'likes_count'
+  #   tmp <- tmp[names(tmp) != 'likes_count.y']
+  tmp$comments_count <- as.integer(tmp$comments_count)
+  tmp$shares_count <- as.integer(tmp$shares_count)
+  ### NA without reactions.
+  # tmp$love_count <- as.integer(tmp$love_count)
+  # tmp$haha_count <- as.integer(tmp$haha_count)
+  # tmp$wow_count <- as.integer(tmp$wow_count)
+  # tmp$sad_count <- as.integer(tmp$sad_count)
+  # tmp$angry_count <- as.integer(tmp$angry_count)
+  # tmp$reactions_count <- as.integer(tmp$likes_count + 
+  #   tmp$love_count + tmp$haha_count + tmp$wow_count + 
+  #   tmp$sad_count + tmp$angry_count
+  # )
+  tmp$link_has_vicpol <- 
+    (grepl("vicpol", tmp$link) & tmp$type == "link")
+  station <- strsplit(tmp$from_name,' ')[[1]][3]
+  tmp$link_is_stale_vicpol <- 
+    (grepl("https", tmp$link) & tmp$link_has_vicpol == T)
+  
+bal_posts_clean <- tmp
+save(bal_posts_clean,
+     file="H:/rfacebook_eyewatch/data/archive/bal_posts_clean.rda")
+```
+
+## Posts by time
+
+```{r, echo=F}
+load(file="H:/rfacebook_eyewatch/data/archive/bal_posts_clean.rda")
+bal_posts_clean <- dplyr::filter(bal_posts_clean, link_has_vicpol == F)
+  #952 to 847 obs.
+
+(p1 <- 
+    ggplot(data = bal_posts_clean, aes(x = created_date) ) +
+    geom_histogram(bins = length(unique(bal_posts_clean$created_yearMonth) ),
+                   fill = "blue", color = "black") + 
+    ylab(label = "posts_count") ) + scale_fill_brewer(palette = "Dark2")
+```
+There is high variability in number of posts per month. On average 28 posts are made per month exluding the first 4 months.
+
+
+##
+
+```{r, include=F}
+sub <- bal_posts_clean[c("created_yearMonth", "type","likes_count",
+                         "comments_count", "shares_count")
+    ]
+sub <- gather(sub, key = created_yearMonth*type, value = likes_count,
+                         comments_count, shares_count)
+
+#TODO: FIX AGGREGATE OR MELT HERE
+with(sub, aggregate(sub, list(created_yearMonth = created_yearMonth, type = type), sum)
+
+
+(p1 <-
+    ggplot(data = sub,
+           aes(x = created_yearMonth, y = value,
+               color = variable, group = variable) ) +
+    geom_line() +
+    ylab(label = "posts_count") ) + scale_fill_brewer(palette = "Dark2")
+```
+
+## Link posts by weekday
+
+```{r, echo=F}
+sub <- dplyr::filter(bal_posts_clean, type == "link")
+(p2 <- 
+  ggplot(data = sub, 
+         aes(x = created_weekday, fill = link_has_vicpol) ) + 
+  geom_histogram(stat="count") + 
+  ylab(label = "linkposts_count") + scale_fill_brewer(palette = "Dark2")
+)  
+```
+
+
+Link posts are slightly more common toward the end of the week. There are more link posts on Sunday than Saturday. 34.1% of link posts contain "vicpol" in the link.
+
+
+## Comments and likes by post age
+
+```{r, echo=F}
+p3 <- 
+  ggplot(data = bal_posts_clean, 
+         aes(x = likes_count, y = comments_count, 
+             shares_count = shares_count, type = type, id = id, 
+             color = -post_age)) + 
+  geom_point(alpha=.5) + scale_fill_brewer(palette = "Dark2")
+plotly::ggplotly(p3)
+```
+Newer posts appear to receive more comments than older posts. Older posts may or may not receive for likes (hard to tell at this color and transparency)
+
+
+## Shares and likes by type
+
+```{r, echo=F}
+p4 <- 
+  ggplot(data = bal_posts_clean, 
+         aes(x = likes_count, y = shares_count, 
+             shares_count = shares_count, id = id, 
+             color = type)) +
+  geom_point(alpha=.5) + scale_fill_brewer(palette = "Dark2")
+plotly::ggplotly(p4)
+```
+Extreme values tend to be photos. Extreme values tend to be liked or shared, but not both. Note that photos are the most common posts followed by links.
+
+
+## Like by year-month across type of post
+
+```{r, echo=F}
+bal_posts_clean$type <- 
+  factor(bal_posts_clean$type, levels = 
+           rev(c("photo", "link", "video", "status", "music") ) )
+(p5 <-
+    ggplot(data = bal_posts_clean, 
+       aes(x = created_yearMonth, y = likes_count, fill = type)) +
+    geom_bar(stat = 'identity') + scale_fill_brewer(palette = "Dark2") 
+)
+```
+Photos followed by links generate the most likes. Note that the y axis is likes and not likes/post.
+
+
+### Missingness and pair-wise scatterplot
+
+```{r, echo=F}
+(p0 <- visdat::vis_dat(bal_posts_clean))
+```
+The data is mostly present. `story, message, link` are the variables by descending missingness.
+
+```{r, echo=F}
+sub <- 
+  bal_posts_clean[
+    c("created_date", "created_weekday", 
+      "likes_count","comments_count", "shares_count", "type", "link_has_vicpol")
+    ]
+(p00 <- GGally::ggpairs(data = sub))
+```
+
+
+
+### Metadata
+
+page: eyewatchballarat
+pull time: 1.04 min
+raw dim: 952 obs x 11 var 
+clean dim: 95 2obs x 26 var 
+pull time: 5:30pm 16 May 2018
+```{r, eval=F, include=F}
+library(Rfacebook)
+
+token <- "EAACEdEose0cBAPTWv9SPehGkMUhTbWCcBYkTi2FNvhAlETSACg0ZCrTxK94v7QSLXWJQxniD8aVkHob0541svS4WOVpKv8O1PABqXXtQWGusAMPdLZBYYRjo6MlOGVUHQQQCOEaoPZAoRWDXbKT8d7lBSId2mBvxOmqxUHJIbKE8UIObWPDOYDaXta9oxAZD" 
+# temp token, will need to gen each time, see:
+# https://developers.facebook.com/tools/explorer/?method=GET&path=me%3Ffields%3Did%2Cname&version=v3.0)
+
+bal <- "eyewatchballarat"
+
+start_time <- Sys.time()
+bal_posts_raw <- as_tibble(getPage(bal, token, n=1000, feed = TRUE)) 
+end_time <- Sys.time()
+
+end_time - start_time #1.04 min, 952 x 11. ballarat, 5:30pm 16 May 2018
+save(bal_posts_raw, file = "data/bal_posts_raw.rda")
+```

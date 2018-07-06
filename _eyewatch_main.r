@@ -29,17 +29,17 @@ args(clean_fb_postreactions)
 ### TEMP TOKEN
 browseURL("https://developers.facebook.com/tools/explorer/?method=GET&path=me%3Ffields%3Did%2Cname&version=v3.0)")
 
-token <- "EAACEdEose0cBADA5d0ZCTgRNbZAJWlxXImvlzAJqmxXhx3vghoQny8rOEO7CsJIYxRGZCFELDQiZAx9LLoQmZAmFGlX93Lp6E5aE1YDHZC6XQcESPCrV8lTKAdVX9M7wwE15h75pvxfAT36ZA67jvxSSjtZANOxdml0uLnuaE1ZCT1YXbrBz1ZC40Co3pdmi1kDdAZD" 
-
-
 ### scratch run
+token <- "EAAC5ZBNCmpAwBALYm8agR7iVmwYZCv29RaV4cZByGUYZBqNovE92ORZCNMKYSLFGMDLvbbXUoYmERCSbNH6xZAQ43Bwc7tZBcBGfo64q2rgPkwxMx3azXo3KC5WP2Vda7Hth3WEyVmY8qaVUMg6xHCM0tW2glAN5kZAzKDX6DkIUx0pJlKI4teBEUBKmiGCGAm0ZD"  # temporary
 pages <- "eyewatchBallarat"
-tmpToken <- "EAACEdEose0cBADA5d0ZCTgRNbZAJWlxXImvlzAJqmxXhx3vghoQny8rOEO7CsJIYxRGZCFELDQiZAx9LLoQmZAmFGlX93Lp6E5aE1YDHZC6XQcESPCrV8lTKAdVX9M7wwE15h75pvxfAT36ZA67jvxSSjtZANOxdml0uLnuaE1ZCT1YXbrBz1ZC40Co3pdmi1kDdAZD" # temporary
-pull_fb_posts(pages, n_ppp=1000, token = tmpToken) -> myFilePath
-add_fb_reactions(myFilePath, token = tmpToken) -> myFilePath
-clean_fb_postreactions(myFilePath)
 
+pull_fb_posts(pages, n_ppp=1500, token = token) -> myFilePath
+add_fb_reactions(myFilePath, token = token) -> myFilePath
+clean_fb_postreactions("data/postreactions_raw_2018_06_03.rda")
 
+myFilePath <- "data/archive/bal_posts_raw_(copy).rda"
+### get filename:
+#paste0("data/postreactions_clean_", gsub("-", "_", Sys.Date()), ".rda")
 
 ### toy:
 load("data/comments_raw_2018_06_03.rda")

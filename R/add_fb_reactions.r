@@ -26,7 +26,7 @@ add_fb_reactions <- function(file, token) {
       #postinfo_raw <- rbind(postinfo_raw, ith_post[[1]]) 
       #dup of the post info from getPage()
       comments_raw <- rbind(comments_raw, ith_post[[2]])
-    }, error=function(e){cat("MISSING POST (no comments or reactions):",
+    }, error=function(e){paste0("MISSING POST (no comments or reactions):",
                              conditionMessage(e), "\n")})
   }
   comments_raw <- as.data.fram(comments_raw)

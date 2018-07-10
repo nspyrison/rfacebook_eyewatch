@@ -100,6 +100,10 @@ load(file="./data/archive/bal_posts_clean.rda")
 
 bal_posts_clean <- dplyr::filter(bal_posts_clean, link_has_vicpol == F)
   #952 to 847 obs.
+bal_posts_clean <- dplyr::filter(bal_posts_clean, created_date > "2015-07-31")
+  #847 to 826 obs.
+bal_posts_clean <- dplyr::filter(bal_posts_clean, type != "music")
+  #826 to 823 obs.
 
 (p1 <- 
     ggplot(data = bal_posts_clean, aes(x = created_date) ) +
@@ -110,8 +114,8 @@ bal_posts_clean <- dplyr::filter(bal_posts_clean, link_has_vicpol == F)
 sub <- filter(bal_posts_clean, created_date > "2015-07-31")
 sub <- sub[c("created_yearMonth", "likes_count",
                          "comments_count", "shares_count")]
-gb_sub <- group_by(sub, created_yearMonth)
-agg <- summarize(gb_sub, 
+# gb_sub <- group_by(sub, created_yearMonth)
+agg <- summarize(sub, 
                  likes_mean=mean(likes_count),
                  comments_mean=mean(comments_count),
                  shares_mean=mean(shares_count),
@@ -121,15 +125,14 @@ agg <- summarize(gb_sub,
                  )
 agg
 ```
-There is high variability in number of posts per month. On average 24 posts are made per month exluding the first 4 months.
+There is high variability in number of posts per month. On average 24.3 posts are made per month exluding the first 4 months. Each post, on average recieves 26.3 likes, 4.9 comments and 21.4 shares.
 
 
-##
+## Mean shares by time across type
 
 ```{r, include=F}
 sub <- bal_posts_clean[c("created_yearMonth", "type", "likes_count",
                          "comments_count", "shares_count")]
-
 gb_sub <- group_by(sub, created_yearMonth, type)
 agg <- summarize(gb_sub, 
                  likes_mean=mean(likes_count),
@@ -141,26 +144,37 @@ agg <- summarize(gb_sub,
                  n_counts=n()
                  )
 
-(p1 <-
-    ggplot(data = agg,
-           aes(x = created_yearMonth, y = value,
-               color = variable, group = variable) ) +
-    geom_line() +
-    ylab(label = "posts_count") ) + scale_fill_brewer(palette = "Dark2")
+# (p1.2 <-
+#     ggplot(data = agg,
+#            aes(x = created_yearMonth, y = shares_mean, fill = type))+
+#     geom_bar(stat = "identity") +
+#     ylab(label = "Mean shares per post") ) +
+#   scale_fill_brewer(palette = "Dark2")
+
+(p1.3 <-
+    ggplot(data = bal_posts_clean,
+           aes(x = created_date, y = (shares_count), fill = type ) ) +
+    geom_smooth() +
+    ylab(label = "Mean shares per post") ) +
+  scale_fill_brewer(palette = "Dark2")
 ```
 
-## Post type by weekday
+Link posts tend to recieve the most shares per post, status posts use to receive more shares per post than the other types, this may be a an artifact only having a few.
+
+## Posts by hour across weekday
 
 ```{r, echo=F}
+### SUB AND AGG HERE.
+
 (p2 <- 
-  ggplot(data = sub, 
-         aes(x = created_weekday, fill = type) ) + 
+  ggplot(data = bal_posts_clean, 
+         aes(x = created_hour, fill = created_weekday) ) + 
   geom_histogram(stat="count") + 
   ylab(label = "posts_count") + scale_fill_brewer(palette = "Dark2")
 )  
 ```
 
-Link posts are slightly more common toward the end of the week. There are more link posts on Sunday than Saturday. 34.1% of link posts contain "vicpol" in the link.
+Posts are much more common on weekdays than weekends as expected. Posts are not lowest around early morning hours, suggesting a timezone offset. It looks like there might be a higher proportion of posts on hours "01" and "04", suggesting a systamatic process possibly calendar event ortimed release of news.
 
 
 ## Comments and likes by post age
@@ -185,7 +199,7 @@ p4 <-
   ggplot(data = bal_posts_clean, 
          aes(x = likes_count, y = shares_count, 
              shares_count = shares_count, id = id, 
-             color = type)) +
+             color = type) ) +
   geom_point(alpha=.5) + scale_fill_brewer(palette = "Dark2")
 plotly::ggplotly(p4)
 ```

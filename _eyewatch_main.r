@@ -30,11 +30,11 @@ args(clean_fb_postreactions)
 browseURL("https://developers.facebook.com/tools/explorer/?method=GET&path=me%3Ffields%3Did%2Cname&version=v3.0)")
 
 ### scratch run
-token <- "EAAC5ZBNCmpAwBALYm8agR7iVmwYZCv29RaV4cZByGUYZBqNovE92ORZCNMKYSLFGMDLvbbXUoYmERCSbNH6xZAQ43Bwc7tZBcBGfo64q2rgPkwxMx3azXo3KC5WP2Vda7Hth3WEyVmY8qaVUMg6xHCM0tW2glAN5kZAzKDX6DkIUx0pJlKI4teBEUBKmiGCGAm0ZD"  # temporary
+tmpToken <- "EAAC5ZBNCmpAwBAEqmoDHdAIcmTyjidzZBi5kLFwGrM3qbuv9TPuQM9oJZCKviTWTiqSMMRpLDTBFiDAskNc5QAc0ioRobZAtO8rnCcz1hbWYVSDYYUBJ0POHu5MZCkLZCYWDyU1Jbv7UDQiPl6yVtfIA6pClZC4VPThV6SEIxrZBk7sCrGktlne1ZBHVZBjcKkescZD"  # temporary
 pages <- "eyewatchBallarat"
 
-pull_fb_posts(pages, n_ppp=1500, token = token) -> myFilePath
-add_fb_reactions(myFilePath, token = token) -> myFilePath
+pull_fb_posts(pages, n_ppp=1500, token = tmpToken) -> myFilePath
+add_fb_reactions(myFilePath, token = tmpToken) -> myFilePath
 clean_fb_postreactions("data/postreactions_raw_2018_06_03.rda")
 
 myFilePath <- "data/archive/bal_posts_raw_(copy).rda"

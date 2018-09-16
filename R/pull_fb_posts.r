@@ -14,7 +14,7 @@ pull_fb_posts <- function(pages, n_ppp = 1000, token) {
   
   posts_raw <- NULL
   for(i in 1:n_pages){
-    delta <- getPage(pages[i], token, n = n_ppp, feed = TRUE)
+    delta <- getPage(pages[i], token, n = n_ppp, api = "2.8")
     delta <- cbind(delta, "page" = pages[i])
     posts_raw <- rbind(posts_raw, delta)
   } 

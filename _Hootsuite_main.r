@@ -1,33 +1,21 @@
-# Hootsuite feasibility
-# NS 16-09-2018
+# Nicholas Spyrison 20-09-2018.
+# load and triage Hootsuite output.
 
-library(tidyverse)
-library(lubridate)
-
-#C:\Users\spyri\Documents\R\rfacebook_eyewatch\data\facebook_postreactions_ns_2018-07-01_to_2018-09-19_created_on_20180920T0140Z
-?read_csv
-dat <- read_csv("./data/facebook_post_performance_2018-09-06_to_2018-09-12_created_on_20180912T0550Z_facebook_post_performance.csv"
-)
-
-### Jul1-Sept19:
-dat <- read_csv("./data/facebook_postreactions_ns_2018-07-01_to_2018-09-19_created_on_20180920T0140Z/facebook_postreactions_ns_2018-07-01_to_2018-09-19_created_on_20180920T0140Z_facebook_posts.csv"
-)
-View(dat)
-
-dat <- as.tibble(dat)
-summary(dat$`Date (GMT)`)
-
-# Removed: Tags, Campaign, Organic.Impressions, Organic.Reach, Other.Actions,
-## Photo.Views, Reactions..Other
-
-# 12 csn stations for Aug 2018, longer than 13 min under Analytics. 16-09-2018.
-
-
-### Reports:
-# Stations:
+### 12 CSN stations:
 ## Ballarat, Brimbank, Cardinia, Frankston, Geelong, Greater Dandenong,
 ## Greater Shepparton, Knox, Latrobe, Melton, Whittlesea, Wyndham.
 
-# New report set up and exporting, weekly, monthly, schedule set.
-## Cannot set external users as schedule reciepiants.
-  
+## New report: "Facebook_PostReactions_ns" 
+## Can schedule exporting weekly and monthly, but on only to hootsuite emaills. 
+## Data in hootsuite back to 18 Nov 2017.
+## Nick has access to all 55 stations.
+
+library(readr)
+
+# posts between: 18-11-2017 to 19-09-2018 for the 12 CSN stations
+## Hootsuite doesn't have data before 18 Nov 2017. Also have all 55 station data
+readr::read_csv("./data/facebook_postreactions_ns_2017-11-18_to_2018-09-19_created_on_20180920T0920Z_facebook_posts.csv"
+) %>% as_tibble() -> dat
+
+#View(dat)
+str(dat)

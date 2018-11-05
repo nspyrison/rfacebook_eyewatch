@@ -8,7 +8,7 @@ output:
 ---
 ```{r options, include=FALSE}
 knitr::opts_chunk$set(
-  echo=TRUE,
+  echo = TRUE,
   message = FALSE,
   warning = FALSE,
   error = FALSE, 
@@ -25,11 +25,10 @@ library("tibble")
 library("tsibble")
 library("lubridate")
 library("plotly")
-#library(tidyverse)
 ```
 
 
-```{r}
+```{r, include=F}
 ### New report: "Facebook_PostReactions_ns" 
 # Can schedule exporting weekly and monthly, but on only to hootsuite emaills.
 # Data in hootsuite back to 18 Nov 2017.
@@ -42,220 +41,191 @@ library("plotly")
 # posts between: 18-11-2017 to 19-09-2018 for the 12 CSN stations
 # Hootsuite doesn't have data before 18 Nov 2017. Also have all 55 station file.
 
-readr::read_csv("./data/facebook_postreactions_ns_2017-11-18_to_2018-09-19_created_on_20180920T0920Z_facebook_posts.csv"
-) %>% as_tibble() -> dat_in
+# All times reported in GMT.
 
-#View(dat_in)
-#str(dat_in)
-dim(dat_in)
-```
+filename <- "../data/facebook_postreactions_ns_2017-11-18_to_2018-09-19_created_on_20180920T0920Z_facebook_posts.csv"
+dat_in <- readr::read_csv(filename) %>% as_tibble() 
 
-A raw data set of 5,674 facebook posts with 9 variables of the 12 CSN Eyewatch Stations was exported from Hootsuite on 20 September 2018. The data ranges from 18 November 2017 through 19 September 2018. Post before 18 November 2017 are not available on the Hootsuite platform.
-
-After cleaning and tidying the data, the 5,674 posts had 27 variables. The increase is for ease of reporting and filtering. The following graphs were produced from this data.
-
-```{r, eval=F,include=F}
-dat <- dat_in[, c(1:6, 8:10)] # remove empty 'Tags' and 'Ow.ly Clicks' columns
-
+dat <- dat_in[, c(1:6, 8:10)] # remove empty columns: 'Tags' and 'Ow.ly Clicks'
 dat <- rename(.data = dat, 
-       `Datetime[GMT]` = `Date (GMT)`,
-       `Station` = `Facebook Page`,
-       `PagePostID`    = `Post ID`,
-       `PostLink`      = `Post Permalink`,
-       `PostType`      = `Post Type`,
-       `PostMessage`   = `Post Message`,
-       `ReactionCount` = `Reactions`,
-       `CommentCount`  = `Comments`,
-       `ShareCount`    = `Shares`
+              `Datetime`      = `Date (GMT)`,
+              `Station`       = `Facebook Page`,
+              `PagePostID`    = `Post ID`,
+              `PostLink`      = `Post Permalink`,
+              `PostType`      = `Post Type`,
+              `PostMessage`   = `Post Message`,
+              `ReactionCount` = `Reactions`,
+              `CommentCount`  = `Comments`,
+              `ShareCount`    = `Shares`
 )
 
 dat <- mutate(
   .data = dat,
   `Station`            = as.factor(substr(`Station`, 12, 100)),
-  `Date[GMT]`          = as.Date(`Datetime[GMT]`),
-  `Time[GMT]`          = substr(`Datetime[GMT]`, 12, 23),
-  `Hour[GMT]`          = as.factor(substr(`Datetime[GMT]`, 12, 13)),
-  `Year`               = year(`Datetime[GMT]`),
-  `Quarter`            = quarter(`Datetime[GMT]`, with_year = F),
-  `Month`              = month(`Datetime[GMT]`, abbr = T),
-  `Week`               = week(`Datetime[GMT]`),
-  `YearQuarter`        = tsibble::yearquarter(`Datetime[GMT]`),
-  `YearMonth`          = tsibble::yearmonth(`Datetime[GMT]`),
-  `YearWeek`           = tsibble::yearweek(`Datetime[GMT]`),
-  `Weekday`            = wday(`Datetime[GMT]`, label = TRUE, week_start = 1),
-  `PostDaysOld`        = as.integer(max(`Date[GMT]`) - `Date[GMT]`),
+  `Date`          = as.Date(`Datetime`),
+  `Time`          = substr(`Datetime`, 12, 23),
+  `Hour`          = as.factor(substr(`Datetime`, 12, 13)),
+  `Year`               = year(`Datetime`),
+  `Quarter`            = quarter(`Datetime`, with_year = F),
+  `Month`              = month(`Datetime`, abbr = T),
+  `Week`               = week(`Datetime`),
+  `YearQuarter`        = tsibble::yearquarter(`Datetime`),
+  `YearMonth`          = tsibble::yearmonth(`Datetime`),
+  `YearWeek`           = tsibble::yearweek(`Datetime`),
+  `Weekday`            = wday(`Datetime`, label = TRUE, week_start = 1),
+  `PostDaysOld`        = as.integer(max(`Date`) - `Date`),
   `PostType`           = as.factor(`PostType`),
   `ReactionCount`      = as.integer(`ReactionCount`),
   `CommentCount`       = as.integer(`CommentCount`),
   `ShareCount`         = as.integer(`ShareCount`),
-  `EngagementCount`    = as.integer(`ReactionCount` + `CommentCount` +
-                                      `ShareCount`),
+  `EngagementCount`    = `ReactionCount` + `CommentCount` + `ShareCount`,
+  `PostMessage`        = 
+    ifelse(`PostMessage` == "(Post with no description)", NA, `PostMessage`),
   `HasVicpolLink`      = (grepl("vicpol", `PostLink`) & `PostType` == "link"),
   `HasHttpsVicpolLink` = (grepl("https", `PostLink`) & `HasVicpolLink` == T)
 )
 
 clean_dat <- dat[,
-  c("PagePostID", "Station",  "Datetime[GMT]", "PostLink", "PostType", 
+  c("PagePostID", "Station",  "Datetime", "PostLink", "PostType", 
     "PostMessage", "ReactionCount", "CommentCount", "ShareCount", 
-    "EngagementCount", "HasVicpolLink", "HasHttpsVicpolLink", "Date[GMT]", 
-    "Time[GMT]", "Hour[GMT]", "Year", "Quarter", "Month", "Week", "YearQuarter",
+    "EngagementCount", "HasVicpolLink", "HasHttpsVicpolLink", "Date", 
+    "Time", "Hour", "Year", "Quarter", "Month", "Week", "YearQuarter",
     "YearMonth", "YearWeek", "Weekday", "PostDaysOld")
   ]
-
-#save(clean_dat, file="./data/last_clean_dat.rda")
 ```
+
+A raw data set of `r nrow(dat)` facebook posts with `r ncol(dat)` variables of `r nrow(unique(clean_dat[, 2]))` unique stations was exported from Hootsuite. The data ranges from `r min(clean_dat$Date)` through `r max(clean_dat$Date)`. Posts before 18 November 2017 are not available on the Hootsuite platform.
+
+```{r, eval=T,include=F}
+#save(clean_dat, file="../data/last_clean_dat.rda")
+#load(file="../data/last_clean_dat.rda")
+
+filt_dat <- clean_dat
+
+filt_dat <- dplyr::filter(filt_dat, HasVicpolLink == F)
+filt_dat <- dplyr::filter(filt_dat, PostType != "music")
+
+
+startDate <- min(filt_dat$`Date`)
+endDate   <- max(filt_dat$`Date`)
+startDay  <- as.integer(substr(startDate,9,10))
+endDay    <- as.integer(substr(endDate,9,10))
+startDaysAfterFirst <- startDay - 1
+endDaysBeforeLast <- 
+  as.integer(lubridate::days_in_month(max(filt_dat$`Date`)) - endDay)
+if (startDaysAfterFirst > 3) {
+  daysTillEoM <- as.integer(
+    lubridate::days_in_month(min(filt_dat$`Date`)) - startDay)
+  dateFloor <- lubridate::as_date(min(filt_dat$`Date`) + daysTillEoM)
+  filt_dat <- dplyr::filter(filt_dat, `Date` > dateFloor)
+}
+if (endDaysBeforeLast > 3) {
+  dateCeiling <- lubridate::as_date(max(filt_dat$`Date`) - endDay + 1)
+  filt_dat <- dplyr::filter(filt_dat, `Date` < dateCeiling)
+}
+
+### Order PostType by asc mean EngagementCount
+# levels(filt_dat$PostType)
+filt_dat$PostType = factor(
+  filt_dat$PostType, levels = c("Event", "Video", "Link", "Status", "Photo"))
+
+sub <- filt_dat[c("Station", "YearMonth", "ReactionCount", "CommentCount",
+                  "ShareCount", "EngagementCount")]
+agg <- summarize(.data = sub,
+                 CountStaions     = length(unique(Station)),
+                 CountYearMonths  = length(unique(YearMonth)),
+                 MeanPostsPm      = n()/length(unique(YearMonth)),
+                 MeanReactionsPp  = mean(ReactionCount),
+                 MeanSharesPp     = mean(ShareCount),
+                 MeanCommentsPp   = mean(CommentCount),
+                 MeanEngagementPp = mean(EngagementCount)
+)
+```
+After cleaning and tidying the data; we filter out link posts that contain "vicpol" in the post url and filter out posts in. If the first month and last month aren't a full months worth of data we remove them for a more apples to apples comparison. The following graphs were produced from the remaining `r nrow(clean_dat)` posts (`r nrow(dat_in) - nrow(clean_dat)` posts less than the original set).
 
 ## Posts by time
 
 ```{r, echo=F}
-#load(file="./data/last_clean_dat.rda")
-filt_dat <- clean_dat
-
-nrow(filt_dat) # originally 5674
-filt_dat <- dplyr::filter(filt_dat, HasVicpolLink == F)
-nrow(filt_dat) # still 5674
-filt_dat <- dplyr::filter(filt_dat, PostType != "music")
-nrow(filt_dat) # still 5674
-
-(p1 <-
-    ggplot(data = filt_dat, aes(x = `Date[GMT]`) ) +
-    geom_histogram(bins = length(unique(filt_dat$YearMonth) ) ) +
-    ylab(label = "Post Count") + scale_fill_brewer(palette = "Dark2") )
-
-sub <- sub[c("YearMonth", "ReactionCount", "CommentCount", "shareCount")]
-agg <- summarize(sub,
-                 ReactionMean   = mean(ReactionCount),
-                 CommentMean    = mean(CommentCount),
-                 SharesCount    = mean(SharesCount),
-                 PostMean       = n()/length(unique(YearMonth)),
-                 YearMonthCount = length(unique(YearMonth)),
-                 PostCount      = n()
-                 )
-agg
+(g1 <-
+  ggplot(data = filt_dat, aes(x = `Date`) ) +
+  geom_histogram(bins = length(unique(filt_dat$YearWeek) ) ) +
+  ylab(label = "Post Count") + xlab("Time (bar is 1 week)") +
+  scale_fill_brewer(palette = "Dark2") )
 ```
-There is high variability in number of posts per month. On average 24.3 posts are made per month exluding the first 4 months. Each post, on average recieves 26.3 likes, 4.9 comments and 21.4 shares.
+Across the `r agg$CountStations` stations for the remaining `r agg$CountYearMonths` months, on average there are: `r agg$MeanPostsPm` posts per month, `r agg$MeanReactionsPp` reactions per post, `r agg$MeanSharesPp` shares per post, `r agg$MeanCommentsPp` comments per post, and `r agg$MeanEngagementsPp` engagements per post. We define engagement to be the sum of reactions, shares, and comments.
 
+## Engagement by month across post type
 
-## Mean shares by time across type
+```{r, echo=F}
+(g4 <- ggplot(data = filt_dat, 
+              aes(x = YearMonth, y = EngagementCount, fill = PostType) ) +
+   geom_bar(stat = 'identity') + 
+   scale_fill_brewer(palette = "Dark2") + xlab("Time (bar is 1 month)")  )
+```
+
+The bulk of engagements are with photo posts.
+
+## Mean engagements trends by time across post type
+
+Do we see engagement across post type changing over time?
 
 ```{r, include=F}
-sub <- filt_dat[c("YearMonth", "PostType", "ReactionCount",
-                  "CommentCount", "ShareCount")]
-gb_sub <- group_by(sub, YearMonth, PostType)
-gb_agg <- summarize(gb_sub, 
-                 ReactionMean   = mean(ReactionCount),
-                 CommentMean    = mean(CommentCount),
-                 Shares_mean    = mean(ShareCount),
-                 ReactionSum    = sum(ReactionCount),
-                 CommentSum     = sum(CommentCount),
-                 ShareSum       = sum(ShareCount),
-                 YearMonthCount = n()
-                 )
-
-(p1.2 <-
-    ggplot(filt_dat ,aes(x = Date[GMT], y = ShareCount, fill = PostType ) ) +
-    geom_smooth() + ylab(label = "Mean shares per post") +
-    scale_fill_brewer(palette = "Dark2") )
-```
-
-Link posts tend to recieve the most shares per post, status posts use to receive more shares per post than the other types, this may be a an artifact only having a few.
-
-## Posts by hour across weekday
-
-```{r, echo=F}
-(p2 <- 
-  ggplot(bal_posts_clean, aes(x = created_hour, fill = created_weekday) ) + 
-  geom_histogram(stat="count") + 
-  ylab(label = "posts_count") + scale_fill_brewer(palette = "Dark2")
-)  
-```
-
-Posts are much more common on weekdays than weekends as expected. Posts are not lowest around early morning hours, suggesting a timezone offset. It looks like there might be a higher proportion of posts on hours "01" and "04", suggesting a systamatic process possibly calendar event ortimed release of news.
-
-
-## Comments and likes by post age
-
-```{r, echo=F}
-p3 <- 
-  ggplot(data = bal_posts_clean, 
-         aes(x = likes_count, y = comments_count, 
-             shares_count = shares_count, type = type, id = id, 
-             color = -post_age)) + 
-  geom_point(alpha=.5) + scale_fill_brewer(palette = "Dark2")
-plotly::ggplotly(p3)
-```
-
-Newer posts appear to receive more comments than older posts. Older posts may or may not receive for likes (hard to tell at this color and transparency)
-
-
-## Shares and likes by type
-
-```{r, echo=F}
-p4 <- 
-  ggplot(data = bal_posts_clean, 
-         aes(x = likes_count, y = shares_count, 
-             shares_count = shares_count, id = id, 
-             color = type) ) +
-  geom_point(alpha=.5) + scale_fill_brewer(palette = "Dark2")
-plotly::ggplotly(p4)
-```
-
-Extreme values tend to be photos. Extreme values tend to be liked or shared, but not both. Note that photos are the most common posts followed by links.
-
-
-## Like by year-month across type of post
-
-```{r, echo=F}
-bal_posts_clean$type <- 
-  factor(bal_posts_clean$type, levels = 
-           rev(c("photo", "link", "video", "status", "music") ) )
-(p5 <-
-    ggplot(data = bal_posts_clean, 
-       aes(x = created_yearMonth, y = likes_count, fill = type)) +
-    geom_bar(stat = 'identity') + scale_fill_brewer(palette = "Dark2") 
+(g2 <- ggplot(filt_dat, 
+              aes(x = `Date`, y = EngagementCount, fill = PostType ) ) +
+   geom_smooth() + scale_fill_brewer(palette = "Dark2") + xlab("Time") + 
+   coord_cartesian(ylim = c(0, 100)) 
 )
 ```
 
-Photos followed by links generate the most likes. Note that the y axis is likes and not likes/post.
+## Engagement by post type across post age
 
-
-### Missingness and pair-wise scatterplot
-
-```{r, echo=F}
-(p0 <- visdat::vis_dat(bal_posts_clean))
-```
-
-The data is mostly present. `story, message, link` are the variables by descending missingness.
+Of the bottom 95% of posts by engagement.
 
 ```{r, echo=F}
-sub <- 
-  bal_posts_clean[c("created_date", "created_weekday", 
-                    "likes_count", "comments_count", "shares_count", "type")]
-(p00 <- GGally::ggpairs(data = sub))
+p3 <- ggplot(data = filt_dat, 
+             aes(x = PostType, y = EngagementCount, 
+                 color = -PostDaysOld, id = PagePostID)) + 
+  geom_point(alpha = .4, position = "jitter") + 
+  scale_y_continuous(limits = c(0, quantile(filt_dat$EngagementCount, .95)) ) 
+plotly::ggplotly(p3)
+```
+
+## High engagment posts: engagement by post type across post age 
+
+Taking a closer look at high engagement posts. Looking at the same graph for only the top 10% of engaged posts.
+
+```{r, echo=F}
+p4 <- ggplot(data = filt_dat, 
+             aes(x = PostType, y = EngagementCount, 
+                 color = -PostDaysOld, id = PagePostID)) + 
+  geom_point(alpha = .6, position = "jitter") + 
+  scale_y_continuous(limits = 
+                       c(quantile(filt_dat$EngagementCount, .90),
+                         max(filt_dat$EngagementCount)*1.01 ) 
+  ) + scale_fill_brewer(palette = "Dark2")
+plotly::ggplotly(p4)
+```
+
+### Appendix
+
+All times are listed in GMT.
+
+```{r, echo=F}
+(a1 <- visdat::vis_dat(filt_dat))
+```
+
+The data is mostly present. `story` is NA if there is no message with a post.
+
+```{r, echo=F}
+a2sub <- filt_dat[c("Station", "YearMonth", "ReactionCount", "CommentCount",
+                  "ShareCount", "EngagementCount")]
+(a2 <- GGally::ggpairs(data = a2sub))
 ```
 
 
-
-### Metadata
-
-page: eyewatchballarat
-pull time: 1.04 min
-raw dim: 952 obs x 11 var 
-clean dim: 95 2obs x 26 var 
-pull time: 5:30pm 16 May 2018
-```{r, eval=F, include=F}
-library(Rfacebook)
-
-token <- "EAACEdEose0cBAPTWv9SPehGkMUhTbWCcBYkTi2FNvhAlETSACg0ZCrTxK94v7QSLXWJQxniD8aVkHob0541svS4WOVpKv8O1PABqXXtQWGusAMPdLZBYYRjo6MlOGVUHQQQCOEaoPZAoRWDXbKT8d7lBSId2mBvxOmqxUHJIbKE8UIObWPDOYDaXta9oxAZD" 
-# temp token, will need to gen each time, see:
-# https://developers.facebook.com/tools/explorer/?method=GET&path=me%3Ffields%3Did%2Cname&version=v3.0)
-
-bal <- "eyewatchballarat"
-
-start_time <- Sys.time()
-bal_posts_raw <- as_tibble(getPage(bal, token, n=1000, feed = TRUE)) 
-end_time <- Sys.time()
-
-end_time - start_time #1.04 min, 952 x 11. ballarat, 5:30pm 16 May 2018
-save(bal_posts_raw, file = "data/bal_posts_raw.rda")
+```{r, echo=F}
+a3sub <- 
+  filt_dat[c("Station", "Date","Weekday", "PostDaysOld", "PostType",
+             "ReactionCount", "CommentCount", "ShareCount", "EngagementCount")]
+summary(a3sub)
 ```

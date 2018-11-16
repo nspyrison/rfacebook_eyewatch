@@ -43,7 +43,8 @@ library("plotly")
 
 # All times reported in GMT.
 
-filename <- "../data/facebook_postreactions_ns_2017-11-18_to_2018-09-19_created_on_20180920T0920Z_facebook_posts.csv"
+filename <- "../data_input/facebook_postreactions_ns_2017-11-18_to_2018-09-19_created_on_20180920T0920Z_facebook_posts.csv" # for just the 12 CSN stations.
+#filename <- "../data_input/all55_facebook_postreactions_ns_2017-11-18_to_2018-09-19_created_on_20180920T0901Z_facebook_posts.csv" # for all 55 stations.
 dat_in <- readr::read_csv(filename) %>% as_tibble() 
 
 dat <- dat_in[, c(1:6, 8:10)] # remove empty columns: 'Tags' and 'Ow.ly Clicks'
@@ -86,8 +87,8 @@ dat <- mutate(
 )
 
 clean_dat <- dat[,
-  c("PagePostID", "Station",  "Datetime", "PostLink", "PostType", 
-    "PostMessage", "ReactionCount", "CommentCount", "ShareCount", 
+  c("PagePostID", "Station",  "Datetime", "PostLink", "PostType",
+    "PostMessage", "ReactionCount", "CommentCount", "ShareCount",
     "EngagementCount", "HasVicpolLink", "HasHttpsVicpolLink", "Date", 
     "Time", "Hour", "Year", "Quarter", "Month", "Week", "YearQuarter",
     "YearMonth", "YearWeek", "Weekday", "PostDaysOld")
@@ -97,14 +98,13 @@ clean_dat <- dat[,
 A raw data set of `r nrow(dat)` facebook posts with `r ncol(dat)` variables of `r nrow(unique(clean_dat[, 2]))` unique stations was exported from Hootsuite. The data ranges from `r min(clean_dat$Date)` through `r max(clean_dat$Date)`. Posts before 18 November 2017 are not available on the Hootsuite platform.
 
 ```{r, eval=T,include=F}
-#save(clean_dat, file="../data/last_clean_dat.rda")
-#load(file="../data/last_clean_dat.rda")
+#save(clean_dat, file="../output/last_clean_dat.rda")
+#load(file="../output/last_clean_dat.rda")
 
 filt_dat <- clean_dat
 
 filt_dat <- dplyr::filter(filt_dat, HasVicpolLink == F)
 filt_dat <- dplyr::filter(filt_dat, PostType != "music")
-
 
 startDate <- min(filt_dat$`Date`)
 endDate   <- max(filt_dat$`Date`)
@@ -128,6 +128,11 @@ if (endDaysBeforeLast > 3) {
 # levels(filt_dat$PostType)
 filt_dat$PostType = factor(
   filt_dat$PostType, levels = c("Event", "Video", "Link", "Status", "Photo"))
+
+#save(filt_dat, file="../output/last_clean_filtered_dat.rda")
+#load(file="../output/last_clean_filtered_dat.rda")
+#write.csv(filt_dat, file = "../output/12csn_clean_filtered.csv")
+#write.csv(filt_dat, file = "../output/all55_clean_filtered.csv")
 
 sub <- filt_dat[c("Station", "YearMonth", "ReactionCount", "CommentCount",
                   "ShareCount", "EngagementCount")]

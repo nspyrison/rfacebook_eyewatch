@@ -5,3 +5,5 @@
 *.xlsx
 fb_oauth
 data/
+data_input/
+output/

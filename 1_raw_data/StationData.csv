@@ -1,0 +1,13 @@
+FacebookPage,RegionName,LGA (UR),Population,name_match,
+Ballarat Police Service Area,Ballarat,Ballarat (C),101689,1,"=IF(LEFT(C2,LEN(C2)-4)=B2,1,0)"
+Brimbank Police Service Area,Brimbank,Brimbank (C),194315,1,
+Cardinia Police Service Area,Cardinia,Cardinia (S),94130,1,
+Frankston Police Service Area,Frankston,Frankston (C),134144,1,
+Geelong Police Service Area,Geelong,Greater Geelong (C),233426,0,
+Greater Dandenong Police Service Area,Greater Dandenong,Greater Dandenong (C),152052,0,
+Greater Shepparton Police Service Area,Greater Shepparton,Greater Shepparton (C),63839,1,
+Knox Police Service Area,Knox,Knox (C),154109,1,
+Latrobe Police Service Area,Latrobe,Latrobe (C),73257,1,
+Melton Police Service Area,Melton,Melton (C),135443,1,
+Whittlesea Police Service Area,Whittlesea,Whittlesea (C),197490,1,
+Wyndham Police Service Area,Wyndham,Wyndham (C),217118,1,

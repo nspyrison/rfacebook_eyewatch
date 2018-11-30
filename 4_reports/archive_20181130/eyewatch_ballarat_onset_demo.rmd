@@ -1,0 +1,96 @@
+---
+title: "Eyewatch - Ballarat"
+author: "Nicholas Spyrison"
+date: "16 May, 2018"
+output: 
+  html_document:
+    self_contained: true
+---
+```{r options, include=FALSE}
+knitr::opts_chunk$set(
+  echo=TRUE,
+  message = FALSE,
+  warning = FALSE,
+  error = FALSE, 
+  collapse = TRUE,
+  comment = "",
+  fig.height = 8,
+  fig.width = 12,
+  fig.align = "center",
+  cache = FALSE)
+
+library(tidyverse)
+library(plotly)
+```
+
+# Metadata and ploting
+
+Data pulled at 5:30pm, 16 May, 2018
+952 post from the Eyewtch - Ballarat facebook page.
+
+
+Pulled and some initial cleaning, let's dive into some basic plots.
+
+```{r}
+load(file = "data/bal_posts_clean.rda")
+
+bal_posts_clean
+
+visdat::vis_dat(bal_posts_clean)
+
+(p1 <- ggplot(data = bal_posts_clean, aes(x=created_date)) +
+  geom_histogram(fill="navyblue"))
+
+(p2 <- ggplot(data = bal_posts_clean, aes(x=wday)) + 
+  geom_histogram(stat="count", fill="navyblue"))
+
+(p3 <- ggplot(data = bal_posts_clean, 
+             aes(x = likes_count, 
+                 y = comments_count, color=day0 
+                 )) + geom_point(alpha=.5))
+
+sub <- bal_posts_clean[c("created_date", "wday", "likes_count", "comments_count", "shares_count")]
+(p4 <- GGally::ggpairs(data = sub))
+```
+
+### Appendix - ETL code
+```{r, eval=FALSE, echo=TRUE}
+library(Rfacebook)
+
+token <- "EAACEdEose0cBAPTWv9SPehGkMUhTbWCcBYkTi2FNvhAlETSACg0ZCrTxK94v7QSLXWJQxniD8aVkHob0541svS4WOVpKv8O1PABqXXtQWGusAMPdLZBYYRjo6MlOGVUHQQQCOEaoPZAoRWDXbKT8d7lBSId2mBvxOmqxUHJIbKE8UIObWPDOYDaXta9oxAZD" 
+# temp token, will need to gen each time, see:
+# https://developers.facebook.com/tools/explorer/?method=GET&path=me%3Ffields%3Did%2Cname&version=v3.0)
+
+bal <- "eyewatchballarat"
+
+start_time <- Sys.time()
+bal_posts_raw <- as_tibble(getPage(bal, token, n=1000, feed = TRUE)) 
+end_time <- Sys.time()
+
+end_time - start_time #1.04 min, 952 x 11. ballarat, 5:30pm 16 May 2018
+save(bal_posts_raw, file = "data/bal_posts_raw.rda")
+```
+
+```{r, eval=FALSE, echo=TRUE}
+load(file = "data/bal_posts_raw.rda")
+bal_posts_clean <- bal_posts_raw
+#str(bal_posts_clean)
+bal_posts_clean$from_id <- as.integer(bal_posts_clean$from_id) #ALL NA after
+#bal_posts_clean <- rename(bal_posts_clean, "created_datetime" = "created_time")
+#bal_posts_clean <- rename(bal_posts_clean, id = form_message_id)
+bal_posts_clean$created_datetime <- bal_posts_clean$created_time
+bal_posts_clean$created_date <- substr(bal_posts_clean$created_datetime, 1, 10)
+bal_posts_clean$created_time <- substr(bal_posts_clean$created_datetime, 11, 24)
+bal_posts_clean$created_date <- as.Date(bal_posts_clean$created_date, "%Y-%m-%d")
+bal_posts_clean$wday <- 
+  lubridate::wday(bal_posts_clean$created_date, label = TRUE)
+bal_posts_clean$day0 <- 
+  as.integer(bal_posts_clean$created_date-min(bal_posts_clean$created_date))
+bal_posts_clean$likes_count <- as.integer(bal_posts_clean$likes_count)
+bal_posts_clean$comments_count <- as.integer(bal_posts_clean$comments_count)
+bal_posts_clean$shares_count <- as.integer(bal_posts_clean$shares_count)
+save(bal_posts_clean, file = "data/bal_posts_clean.rda")
+```
+
+
+

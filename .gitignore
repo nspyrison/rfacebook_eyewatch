@@ -2,8 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-*.xlsx
-*.csv
 *.html
 1_raw_data/
 3_staged_data/

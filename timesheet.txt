@@ -1,4 +1,4 @@
-date,duration[hrs]
+"date","duration[hrs]","comments"
 +++Premeeting_on_old_laptop,Double check I got paid, goes back to 16/5
 26/05/2018,2.51 
 29/05/2018,1.5
@@ -32,3 +32,8 @@ date,duration[hrs]
 30/11/2018,3.5
 03/12/2018,3.5
 "above submitted__","__below unsubmitted"
+17/12/2018,.25
+18/12/2018,.5
+09/01/2019,11am-12,"Data still not available on reports: opened tickets to follow up with HS, angela email from Dec 3, follow up Dec 17. no data on laptop; will continue on desktop."
+12/01/2019,3:45pm-6:30,"Ticket, Measure: Post Performance, and exporting data for all 55 stations on ZenBook. clean function to match new structure."
+

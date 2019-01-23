@@ -5,10 +5,6 @@ library(lubridate)
 library(tsibble)
 library(dplyr)
 
-## EXAMPLE:
-# f1 <- "./1_raw_data/facebook_post_performance_2017-11-18_to_2018-03-31_created_on_20190112T0507Z_facebook_post_performance.csv"
-# outpath <- clean_hs_fb_posts(f1)
-
 clean_hs_fb_posts <- function(path) {
   ### ASSERT AND LOAD
   stopifnot(is.character(path))
@@ -55,7 +51,7 @@ clean_hs_fb_posts <- function(path) {
     `Impressions`       = as.integer(`Impressions`),
     `LinkClicks`        = as.integer(`Link Clicks`),
     `Reach`             = as.integer(`Reach`),
-    `Reactions`          = as.integer(`Reactions`),
+    `Reactions`         = as.integer(`Reactions`),
     `Reactions_Anger`   = as.integer(`Reactions: Anger`),
     `Reactions_Haha`    = as.integer(`Reactions: Haha`),
     `Reactions_Like`    = as.integer(`Reactions: Like`),
@@ -96,6 +92,12 @@ clean_hs_fb_posts <- function(path) {
        "YearQuarter", "YearMonth", "YearWeek", "Weekday", "DaysOld")
     ]
   
+  # ### JOIN IN STATION POP
+  # psa_pop <- read.csv(file = "./1_raw_data/PSA_population.csv")[,c(2,4)]
+  # psa_pop <- dplyr::rename(psa_pop, Station = trim_fb_name)
+  # clean_dat <- merge(x = clean_dat, y = psa_pop, by = "Station", all.x = TRUE)
+  # ### 2019/01/23 commented, cause wrong grain.
+  
   ### FILTER
   filt_dat <- clean_dat
   filt_dat <- dplyr::filter(filt_dat, PostType != "music")
@@ -115,12 +117,12 @@ clean_hs_fb_posts <- function(path) {
   }
   if (endDaysBeforeLast > 3) {
     dateCeiling <- lubridate::as_date(endDate - endDay + 1)
-    filt_dat <- dplyr::filter(filt_dat, `Date` < dateCeiling)
+    filt_dat    <- dplyr::filter(filt_dat, `Date` < dateCeiling)
   }
   
   ### RETURN
   filename <- paste0(filename, "_cleaned")
-  csv_path <-paste0("./3_staged_data/", filename, ".csv")
+  csv_path <- paste0("./3_staged_data/", filename, ".csv")
   rda_path <- paste0("./3_staged_data/", filename, ".rda")
   
   output <- filt_dat
@@ -134,4 +136,11 @@ clean_hs_fb_posts <- function(path) {
   )
   
   return(rda_path)
+}
+
+
+## EXAMPLE, not run
+if (F) {
+  f1 <- "./1_raw_data/facebook_post_performance_2017-11-18_to_2018-03-31_created_on_20190112T0507Z_facebook_post_performance.csv"
+  outpath <- clean_hs_fb_posts(f1)
 }

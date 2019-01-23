@@ -31,9 +31,10 @@
 16/11/2018,2
 30/11/2018,3.5
 03/12/2018,3.5
+18/12/2018,1
+09/01/2019,(1)11am-12,"Data still not available on reports: opened tickets to follow up with HS, angela email from Dec 3, follow up Dec 17. no data on laptop; will continue on desktop."
+12/01/2019,(2.75)3:45pm-6:30,"Ticket, Measure: Post Performance, and exporting data for all 55 stations on ZenBook. clean function to match new structure."
+14/01/2019,(1.5)11am-12.5,"email inc current state, meeting invite, meeting reschedulings".
+23/01/2019,(4.75)1:30pm-6:15pm, "join in pop, bind data, data on google dirve, meeting, .rmd recovery."
 "above submitted__","__below unsubmitted"
-17/12/2018,.25
-18/12/2018,.5
-09/01/2019,11am-12,"Data still not available on reports: opened tickets to follow up with HS, angela email from Dec 3, follow up Dec 17. no data on laptop; will continue on desktop."
-12/01/2019,3:45pm-6:30,"Ticket, Measure: Post Performance, and exporting data for all 55 stations on ZenBook. clean function to match new structure."
-
+24/01/2019,(1)6:15pm-7:15, ".rmd recovery, email followup"

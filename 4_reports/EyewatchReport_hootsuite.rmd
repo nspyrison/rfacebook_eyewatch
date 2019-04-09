@@ -1,7 +1,7 @@
 ---
 title: "Eyewatch facebook posts -- via Hootsuite"
 author: "Nicholas Spyrison"
-date: "Jan 2019"
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
 output: 
   html_document:
     self_contained: true
@@ -27,7 +27,7 @@ library("ggplot2")
 library("lubridate")
 library("plotly")
 
-load("../3_staged_data/bound_data_2019-01-23.rda")
+load("../3_staged_data/bound_data_2019-04-09.rda")
 dat <- bound_data
 ```
 
@@ -53,50 +53,55 @@ agg <- summarize(.data = sub,
 (g1 <-
   ggplot(data = dat, aes(x = `Date`, fill = PostType) ) +
   geom_histogram(bins = length(unique(dat$YearWeek))) +
-  ggtitle("Post vs time (by post type)") +
+  ggtitle("Post vs Time (by post type)") +
   ylab("Number of Posts") + xlab("Time (each bar is 1 week)") +
   scale_fill_brewer(palette = "Dark2") 
 )
 ```
 
-## Engagement by month across post type
+## Engagement by time
+
+Something looks off with the Post Type after 2018/07. I will dig into this.
+
+```{r, echo=F}
+
+(g2 <- ggplot(data = dat, aes(x = YearMonth)) +
+   geom_bar(aes(y = Engagements/1000, fill = PostType), stat = 'identity') + 
+   ggtitle("Total Engagements vs time (by post type)") +
+   xlab("Time (each bar is 1 week)") + ylab("1000x Engagments") +
+   scale_fill_brewer(palette = "Dark2"))
+```
+
+Let's look at Engagements per post. A little hard to read as stacked bar chart...
 
 ```{r, echo=F}
 agg1 <-
   dat %>%
-  group_by(YearMonth) %>%
+  group_by(YearQuarter, PostType) %>%
   summarise (Engagements = sum(Engagements),
              Posts = n(),
              Engagements_pp = sum(Engagements)/n())
 
-(g2 <- ggplot(data = dat, aes(x = YearWeek)) +
-   geom_bar(aes(y = Engagements/1000, fill = PostType), stat = 'identity') + 
-   ggtitle("Engagements vs time (by post type)") +
-   xlab("Time (each bar is 1 week)") + ylab("1,000x Engagments") +
-   scale_fill_brewer(palette = "Dark2")
-)
-
 ggplot(data = agg1) +
-  geom_line(aes(x=YearMonth, y= Posts/max(Posts), color = "Rate of posts")) +
-  geom_line(aes(x=YearMonth, y= Engagements_pp/max(Engagements_pp), color = "Rate of Engagements"))
-  # + scale_y_continuous(sec.axis = sec_axis(~., name = "Engagements per Post"))
-
-
+  geom_bar(aes(x=YearQuarter, y=Engagements_pp, fill = PostType), stat = 'identity') +
+  ggtitle("Engagements per Post vs time (by post type)") +
+   xlab("Time (each bar is 1 Quarter)") + ylab(" Engagments per Post") +
+   scale_fill_brewer(palette = "Dark2")
 ```
 
-The bulk of engagements are with photo posts.
 
-## Mean engagements trends by time across post type
 
-Do we see engagement across post type changing over time?
+<!-- ## Mean engagements trends by time across post type -->
 
-```{r, include=F}
-# (g2 <- ggplot(dat, 
-#               aes(x = `Date`, y = Engagements, fill = PostType ) ) +
-#    geom_smooth() + scale_fill_brewer(palette = "Dark2") + xlab("Time") + 
-#    coord_cartesian(ylim = c(0, 100)) 
-# )
-```
+<!-- Do we see engagement across post type changing over time? -->
+
+<!-- ```{r, include=F} -->
+<!-- # (g2 <- ggplot(dat,  -->
+<!-- #               aes(x = `Date`, y = Engagements, fill = PostType ) ) + -->
+<!-- #    geom_smooth() + scale_fill_brewer(palette = "Dark2") + xlab("Time") +  -->
+<!-- #    coord_cartesian(ylim = c(0, 100))  -->
+<!-- # ) -->
+<!-- ``` -->
 
 ## Engagement by post type across post age
 
@@ -108,23 +113,25 @@ p3 <- ggplot(data = dat,
                  color = -DaysOld, id = PagePostID)) + 
   geom_point(alpha = .4, position = "jitter") + 
   scale_y_continuous(limits = c(0, quantile(dat$Engagements, .95)) ) 
-plotly::ggplotly(p3)
+#plotly::ggplotly(p3)
+p3
 ```
 
 ## High engagment posts: engagement by post type across post age 
 
-Taking a closer look at high engagement posts. Looking at the same graph for only the top 10% of engaged posts.
+Taking a closer look at high engagement posts. Looking at the same graph for only the top 2% of engaged posts.
 
 ```{r, echo=F}
 p4 <- ggplot(data = dat, 
              aes(x = PostType, y = Engagements, 
                  color = -DaysOld, id = PagePostID)) + 
   geom_point(alpha = .6, position = "jitter") + 
-  scale_y_continuous(limits = 
-                       c(quantile(dat$Engagements, .90),
+  scale_y_continuous(limits = c(
+    quantile(dat$Engagements, .98),
                          max(dat$Engagements)*1.01 ) 
   ) + scale_fill_brewer(palette = "Dark2")
-plotly::ggplotly(p4)
+#plotly::ggplotly(p4)
+p4
 ```
 
 ### Appendix

@@ -78,6 +78,7 @@ clean_hs_fb_posts <- function(path) {
       "Knox", "Geelong"), "CSN", "not CSN")
   )
   levels(dat$PostType) <- c("Event", "Video", "Link", "Status", "Photo")
+  # "event" seem to be causing issue before 2018/07.
   
   clean_dat <- dat[
     ,c("PagePostID", "Station",  "Datetime", "PostLink", "PostType",

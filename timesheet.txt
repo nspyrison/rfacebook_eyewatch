@@ -36,5 +36,6 @@
 12/01/2019,(2.75)3:45pm-6:30,"Ticket, Measure: Post Performance, and exporting data for all 55 stations on ZenBook. clean function to match new structure."
 14/01/2019,(1.5)11am-12.5,"email inc current state, meeting invite, meeting reschedulings".
 23/01/2019,(4.75)1:30pm-6:15pm, "join in pop, bind data, data on google dirve, meeting, .rmd recovery."
+19/02/2019,(1)6:15pm-7:15, ".rmd recovery, email followup"
+09/04/2019,(1hr,40m)5:50pm-7:30,"last quarter pull, function fix, post to drive, .html, email"
 "above submitted__","__below unsubmitted"
-24/01/2019,(1)6:15pm-7:15, ".rmd recovery, email followup"

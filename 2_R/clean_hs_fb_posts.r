@@ -14,8 +14,7 @@ clean_hs_fb_posts <- function(path) {
   filename = substr(path, 14, nchar(path) - 4) 
     #SPECIFIC TO './1_raw_data/' & '.csv'
   
-  dat_in <- suppressWarnings(tibble::as_tibble(readr::read_csv(path)))
-  dat <- dat_in
+  dat <- suppressWarnings(tibble::as_tibble(readr::read_csv(path)))
   if (nrow(dat) == 10000) warning("Data contains exactly 10,000 rows, Data export may have been turncated by Hootsuite")
   
   ### STAGE AND CLEAN
@@ -72,12 +71,15 @@ clean_hs_fb_posts <- function(path) {
     `Engagements`       = `Reactions` + `Comments` + `Shares`,
     `PostMessage`       = ifelse(`Post Message` == "(Post with no description)", NA, `Post Message`),
     `DateAquired`       = as.Date(substr(path, nchar(path) - 32, nchar(path) - 25), "%Y%m%d"),
-    `IsCsnStation`      = ifelse(`Station` %in% c(
-      "Wyndham", "Melton", "Whittlesea", "Cardinia", "Latrobe", "Ballarat", 
-      "Brimbank", "Greater Shepparton", "Greater Dandenong", "Frankston", 
-      "Knox", "Geelong"), "CSN", "not CSN")
+    `IsCsnStation`      = 
+      ifelse(`Station` == "Victoria Police", "VIC Pol",
+             ifelse(`Station` %in% c(
+               "Wyndham", "Melton", "Whittlesea", "Cardinia", "Latrobe", "Ballarat", 
+               "Brimbank", "Greater Shepparton", "Greater Dandenong", "Frankston", 
+               "Knox", "Geelong"), "CSN", "not CSN")
+      )
   )
-  levels(dat$PostType) <- c("Event", "Video", "Link", "Status", "Photo")
+  #levels(dat$PostType) <- c("Event", "Video", "Link", "Status", "Photo")
   # "event" seem to be causing issue before 2018/07.
   
   clean_dat <- dat[
@@ -92,43 +94,23 @@ clean_hs_fb_posts <- function(path) {
        "Date", "Time", "Hour", "Year", "Quarter", "Month", "Week", 
        "YearQuarter", "YearMonth", "YearWeek", "Weekday", "DaysOld")
     ]
+  ### FILTER
+  clean_dat <- dplyr::filter(clean_dat, PostType != "music")
   
   # ### JOIN IN STATION POP
   # psa_pop <- read.csv(file = "./1_raw_data/PSA_population.csv")[,c(2,4)]
   # psa_pop <- dplyr::rename(psa_pop, Station = trim_fb_name)
   # clean_dat <- merge(x = clean_dat, y = psa_pop, by = "Station", all.x = TRUE)
-  # ### 2019/01/23 commented, cause wrong grain.
+  # ### 2019/01/23 commented, cause wrong grain. Population data at station grain, not post.
   
-  ### FILTER
-  filt_dat <- clean_dat
-  filt_dat <- dplyr::filter(filt_dat, PostType != "music")
-  
-  ### IF MORE THAN 3 DAYS ARE MISSING FROM THE START OR END MONTH,
-  ###   ASSUME THE MONTH IS INCOMPLETE AND DROP IT.
-  startDate <- min(filt_dat$`Date`)
-  endDate   <- max(filt_dat$`Date`)
-  startDay  <- as.integer(substr(startDate,9,10))
-  endDay    <- as.integer(substr(endDate,9,10))
-  startDaysAfterFirst <- startDay - 1
-  endDaysBeforeLast <- as.integer(lubridate::days_in_month(endDate) - endDay)
-  if (startDaysAfterFirst > 3) {
-    daysTillEoM <- as.integer(lubridate::days_in_month(startDate) - startDay)
-    dateFloor <- lubridate::as_date(startDate + daysTillEoM)
-    filt_dat <- dplyr::filter(filt_dat, `Date` > dateFloor)
-  }
-  if (endDaysBeforeLast > 3) {
-    dateCeiling <- lubridate::as_date(endDate - endDay + 1)
-    filt_dat    <- dplyr::filter(filt_dat, `Date` < dateCeiling)
-  }
-  
-  ### RETURN
+  ### WRITE
   filename <- paste0(filename, "_cleaned")
   csv_path <- paste0("./3_staged_data/", filename, ".csv")
   rda_path <- paste0("./3_staged_data/", filename, ".rda")
   
-  output <- filt_dat
+  output <- clean_dat
   assign(filename, output)
-  write.csv(filt_dat, file = csv_path, row.names = FALSE)
+  write.csv(clean_dat, file = csv_path, row.names = FALSE)
   save(list = filename, file = rda_path)
   
   ifelse(file.exists(csv_path) & file.exists(rda_path),

@@ -52,27 +52,26 @@ agg <- summarize(.data = sub,
 ```{r, echo=F}
 (g1 <-
   ggplot(data = dat, aes(x = `Date`, fill = PostType) ) +
-  geom_histogram(bins = length(unique(dat$YearWeek))) +
+  geom_histogram(bins = length(unique(dat$YearMonth))) +
   ggtitle("Post vs Time (by post type)") +
-  ylab("Number of Posts") + xlab("Time (each bar is 1 week)") +
+  ylab("Number of Posts") + xlab("Time (each bar is 1 month)") +
   scale_fill_brewer(palette = "Dark2") 
 )
 ```
 
 ## Engagement by time
 
-Something looks off with the Post Type after 2018/07. I will dig into this.
 
 ```{r, echo=F}
 
 (g2 <- ggplot(data = dat, aes(x = YearMonth)) +
    geom_bar(aes(y = Engagements/1000, fill = PostType), stat = 'identity') + 
    ggtitle("Total Engagements vs time (by post type)") +
-   xlab("Time (each bar is 1 week)") + ylab("1000x Engagments") +
+   xlab("Time (each bar is 1 month)") + ylab("1000x Engagments") +
    scale_fill_brewer(palette = "Dark2"))
 ```
 
-Let's look at Engagements per post. A little hard to read as stacked bar chart...
+This don't control for the post volume, let's look at Engagements per post.
 
 ```{r, echo=F}
 agg1 <-
@@ -85,7 +84,7 @@ agg1 <-
 ggplot(data = agg1) +
   geom_bar(aes(x=YearQuarter, y=Engagements_pp, fill = PostType), stat = 'identity') +
   ggtitle("Engagements per Post vs time (by post type)") +
-   xlab("Time (each bar is 1 Quarter)") + ylab(" Engagments per Post") +
+   xlab("Time (each bar is 1 month)") + ylab(" Engagments per Post") +
    scale_fill_brewer(palette = "Dark2")
 ```
 

@@ -38,4 +38,5 @@
 23/01/2019,(4.75)1:30pm-6:15pm, "join in pop, bind data, data on google dirve, meeting, .rmd recovery."
 19/02/2019,(1)6:15pm-7:15, ".rmd recovery, email followup"
 09/04/2019,(1hr,40m)5:50pm-7:30,"last quarter pull, function fix, post to drive, .html, email"
+15/04/2019,(1.25)7:30-8:45pm,"CSN compare report, fix post type in ETL"
 "above submitted__","__below unsubmitted"

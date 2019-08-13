@@ -1,0 +1,116 @@
+---
+title: "CSN questions 1 & 2"
+author: "Nicholas Spyrison"
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output: 
+  html_document:
+    self_contained: true
+---
+
+```{r options, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  error = FALSE, 
+  collapse = TRUE,
+  comment = "",
+  fig.height = 8,
+  fig.width = 12,
+  fig.align = "center",
+  cache = FALSE)
+
+library("tidyverse")
+library("plotly")
+
+load("../3_staged_data/bound_data_2019-04-09.rda")
+# str(bound_data) # ~39k x 39 var
+dat <- bound_data %>% 
+  filter(IsCsnStation == "CSN") # ~10k x 39 var 
+dat$PostMessageLen <- nchar(dat$PostMessage)
+dat$Hour <- as.integer(dat$Hour)
+dat$Station <- as.factor(as.character(dat$Station)) # relevel
+```
+
+# Overview 
+
+Answering the following questions the following questions with a paragraph and relevant graphs as prompted from Kathryn's 13 Aug 2019 email:
+1. What types of posts had the highest and lowest engagments?
+2. Was there a significant increase in engagement over the evaluation period?
+    + If so, did the control, non-CSA sites increase too?
+    
+The scope of the data is facebook posts for the CSN stations between December 2017 and March 2019.
+
+## High and low engagement
+
+We are trying to identify or characterize where high/low (top and bottom 10%) engament of posts come from rather than predict the engagements, because of the we tried to identify the demongraphic dimensions that show contrast, namely: date, day of the week, station, and post type. 
+
+High engagement posts tend to be slightly newer (1), though they are less sensitive to weekly flucuations than number of posts (2). They are disproportionatly video and link posts (3). Station is also a strong indicator of high engagement with Latrobe and Cardinia recieving a larger number, and Greater Dandenong and Greater Shepparton recieving a smaller share propotionately (4).
+```{r, eval=T, include=F}
+n = .1
+dat$IsTop <- ifelse(dat$Engagements > quantile(dat$Engagements, prob = 1-n), T, F)
+dat$IsBottom <- ifelse(dat$Engagements < quantile(dat$Engagements, prob = n), T, F)
+
+# ### EDA
+# high <- subset(dat, Engagements > quantile(Engagements, prob = 1-n))
+# low  <- subset(dat, Engagements < quantile(Engagements, prob = n)) 
+# subset_vars1 <- c(2,3,5,7,30,38,39,40)
+# dat_sub1 <- dat[, subset_vars1]
+# high_sub <- high[, subset_vars1]
+# GGally::ggpairs(high_sub) 
+# summary(high_sub)
+# summary(dat_sub1)
+
+### Date density
+dat %>%
+ group_by(IsTop) %>%
+ summarise(MeanDate = mean(Date)) -> agg1
+
+gg1 <- ggplot(dat) +
+  geom_density(alpha = .4, mapping = aes(x = Date, fill = IsTop)) +
+  geom_vline(agg1, mapping = 
+               aes(xintercept = MeanDate, color = IsTop), linetype = "dashed") +
+  scale_fill_brewer(palette = "Dark2")
+
+### Posts by Weekday
+dat %>%
+  group_by(IsTop, Weekday) %>%
+  summarise(Posts = n()) -> agg2
+
+gg2 <- ggplot(agg2, mapping = aes(x = Weekday, y = Posts, fill = IsTop)) +
+  geom_bar(stat = "identity") +
+  scale_fill_brewer(palette = "Dark2")
+# not too extreme
+
+### Posts by Station
+dat %>%
+  group_by(IsTop, Station) %>%
+  summarise(Posts = n()) -> agg3
+agg3$Station <- factor(agg3$Station, 
+                       levels = agg3$Station[c(6,5,3,7,12,10,1,9,8,2,4,11)])
+
+gg3 <- ggplot(agg3, mapping = aes(x = Station, y = Posts, fill = IsTop)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1)) +
+  scale_fill_brewer(palette = "Dark2")
+
+### Posts by Type
+dat %>%
+  group_by(IsTop, PostType) %>%
+  summarise(Posts = n()) -> agg4
+agg4$PostType <- factor(agg4$PostType, levels = agg4$PostType[c(2,3,4,1,5)])
+
+gg4 <- ggplot(agg4, mapping = aes(x = PostType, y = Posts, fill = IsTop)) +
+  geom_bar(stat = "identity") + 
+  scale_fill_brewer(palette = "Dark2")
+
+```
+
+
+```{r, echo=F}
+cowplot::plot_grid(gg1, gg2, gg3, gg4, 
+                     ncol = 2, nrow = 2,
+                     labels = c(1,2,3,4))
+```
+
+TODO: LOW POSTS.

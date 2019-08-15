@@ -1,7 +1,7 @@
 ---
 title: "CSN questions 1 & 2"
 author: "Nicholas Spyrison"
-date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+date: '15 August 2019' # '`r format(Sys.Date(), "%Y-%B-%d")`'
 output: 
   html_document:
     self_contained: true
@@ -30,26 +30,13 @@ dat <- bound_data %>%
 dat$PostMessageLen <- nchar(dat$PostMessage)
 dat$Hour <- as.integer(dat$Hour)
 dat$Station <- as.factor(as.character(dat$Station)) # relevel
-```
-
-# Overview 
-
-Answering the following questions the following questions with a paragraph and relevant graphs as prompted from Kathryn's 13 Aug 2019 email:
-1. What types of posts had the highest and lowest engagments?
-2. Was there a significant increase in engagement over the evaluation period?
-    + If so, did the control, non-CSA sites increase too?
-    
-The scope of the data is facebook posts for the CSN stations between December 2017 and March 2019.
-
-## High and low engagement
-
-We are trying to identify or characterize where high/low (top and bottom 10%) engament of posts come from rather than predict the engagements, because of the we tried to identify the demongraphic dimensions that show contrast, namely: date, day of the week, station, and post type. 
-
-High engagement posts tend to be slightly newer (1), though they are less sensitive to weekly flucuations than number of posts (2). They are disproportionatly video and link posts (3). Station is also a strong indicator of high engagement with Latrobe and Cardinia recieving a larger number, and Greater Dandenong and Greater Shepparton recieving a smaller share propotionately (4).
-```{r, eval=T, include=F}
+dat <- rename(dat, 
+              `Post Type` = PostType,
+              `Year Month` = YearMonth)
+### Create 10 end quantiles
 n = .1
-dat$IsTop <- ifelse(dat$Engagements > quantile(dat$Engagements, prob = 1-n), T, F)
-dat$IsBottom <- ifelse(dat$Engagements < quantile(dat$Engagements, prob = n), T, F)
+dat$`Is Top` <- ifelse(dat$Engagements > quantile(dat$Engagements, prob = 1-n), T, F)
+dat$`Is Bottom` <- ifelse(dat$Engagements < quantile(dat$Engagements, prob = n), T, F)
 
 # ### EDA
 # high <- subset(dat, Engagements > quantile(Engagements, prob = 1-n))
@@ -60,57 +47,195 @@ dat$IsBottom <- ifelse(dat$Engagements < quantile(dat$Engagements, prob = n), T,
 # GGally::ggpairs(high_sub) 
 # summary(high_sub)
 # summary(dat_sub1)
+```
 
+# Overview 
+
+Answering the following questions with a paragraph and relevant graphs as prompted from Kathryn's 13 August 2019 email:
+1. What types of posts had the highest and lowest engagements?
+2. Was there a significant increase in engagement over the evaluation period?
+    + If so, did the control, non-CSA sites increase too?
+    
+The scope of the data is facebook posts for the CSN stations between December 2017 and March 2019.
+
+## High and low engagement
+
+We are trying to identify or characterize where high/low (top and bottom 10%) engagement of posts come from rather than predict the engagements, because of this we tried to identify the demographic dimensions that show contrast, namely: date, day of the week, station, and post type. 
+
+High engagement posts tend to be slightly newer,(1) though they are less sensitive to weekly fluctuations than the number of posts.(2) High engagement posts are disproportionately high for video and link post types.(3) Station is also a strong indicator of high engagement with Latrobe and Cardinia receiving a larger number, and Greater Dandenong and Greater Shepparton receiving a smaller share proportionately.(4)
+```{r, eval=T, include=F}
+##### High engagement
 ### Date density
 dat %>%
- group_by(IsTop) %>%
+ group_by(`Is Top`) %>%
  summarise(MeanDate = mean(Date)) -> agg1
 
 gg1 <- ggplot(dat) +
-  geom_density(alpha = .4, mapping = aes(x = Date, fill = IsTop)) +
+  geom_density(alpha = .4, mapping = aes(x = Date, fill = `Is Top`)) +
   geom_vline(agg1, mapping = 
-               aes(xintercept = MeanDate, color = IsTop), linetype = "dashed") +
+               aes(xintercept = MeanDate, linetype = `Is Top`)) +
   scale_fill_brewer(palette = "Dark2")
 
 ### Posts by Weekday
 dat %>%
-  group_by(IsTop, Weekday) %>%
+  group_by(`Is Top`, Weekday) %>%
   summarise(Posts = n()) -> agg2
 
-gg2 <- ggplot(agg2, mapping = aes(x = Weekday, y = Posts, fill = IsTop)) +
+gg2 <- ggplot(agg2, mapping = aes(x = Weekday, y = Posts, fill = `Is Top`)) +
   geom_bar(stat = "identity") +
   scale_fill_brewer(palette = "Dark2")
 # not too extreme
 
 ### Posts by Station
 dat %>%
-  group_by(IsTop, Station) %>%
+  group_by(`Is Top`, Station) %>%
   summarise(Posts = n()) -> agg3
 agg3$Station <- factor(agg3$Station, 
                        levels = agg3$Station[c(6,5,3,7,12,10,1,9,8,2,4,11)])
 
-gg3 <- ggplot(agg3, mapping = aes(x = Station, y = Posts, fill = IsTop)) +
+gg3 <- ggplot(agg3, mapping = aes(x = Station, y = Posts, fill = `Is Top`)) +
   geom_bar(stat = "identity") +
-  theme(axis.text.x = element_text(angle = 30, hjust = 1)) +
+  theme(axis.text.x = element_text(angle = 40, hjust = 1)) +
   scale_fill_brewer(palette = "Dark2")
 
 ### Posts by Type
 dat %>%
-  group_by(IsTop, PostType) %>%
+  group_by(`Is Top`, `Post Type`) %>%
   summarise(Posts = n()) -> agg4
-agg4$PostType <- factor(agg4$PostType, levels = agg4$PostType[c(2,3,4,1,5)])
+agg4$`Post Type` <- factor(agg4$`Post Type`, levels = agg4$`Post Type`[c(2,3,4,1,5)])
 
-gg4 <- ggplot(agg4, mapping = aes(x = PostType, y = Posts, fill = IsTop)) +
+gg4 <- ggplot(agg4, mapping = aes(x = `Post Type`, y = Posts, fill = `Is Top`)) +
   geom_bar(stat = "identity") + 
   scale_fill_brewer(palette = "Dark2")
 
 ```
 
-
+**High engagement posts vs remainder**
 ```{r, echo=F}
 cowplot::plot_grid(gg1, gg2, gg3, gg4, 
                      ncol = 2, nrow = 2,
                      labels = c(1,2,3,4))
 ```
 
-TODO: LOW POSTS.
+Low engagement posts, surprisingly, also tend to be slightly newer,(5) they tend to be proportional to the number of posts on the weekdays, but less likely on Saturday.(6) Low engagement posts have a high proportion of status and photo post types, while link seems to have few such posts.(7) Station is a decent indicator of low engagement with Whittlesea has the largest proportion, while, Geelong and Wyndham rarely have low engagement.(8)
+
+```{r, eval=T, include=F}
+##### Low engagement
+### Date density
+dat %>%
+ group_by(`Is Bottom`) %>%
+ summarise(MeanDate = mean(Date)) -> agg5
+
+gg5 <- ggplot(dat) +
+  geom_density(alpha = .4, mapping = aes(x = Date, fill = `Is Bottom`)) +
+  geom_vline(agg5, mapping = 
+               aes(xintercept = MeanDate, linetype = `Is Bottom`)) +
+  scale_fill_brewer(palette = "Dark2")
+
+### Posts by Weekday
+dat %>%
+  group_by(`Is Bottom`, Weekday) %>%
+  summarise(Posts = n()) -> agg6
+
+gg6 <- ggplot(agg6, mapping = aes(x = Weekday, y = Posts, fill = `Is Bottom`)) +
+  geom_bar(stat = "identity") +
+  scale_fill_brewer(palette = "Dark2")
+# not too extreme
+
+### Posts by Station
+dat %>%
+  group_by(`Is Bottom`, Station) %>%
+  summarise(Posts = n()) -> agg7
+agg7$Station <- factor(agg7$Station, 
+                       levels = agg7$Station[c(6,5,3,7,12,10,1,9,8,2,4,11)])
+
+gg7 <- ggplot(agg7, mapping = aes(x = Station, y = Posts, fill = `Is Bottom`)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 40, hjust = 1)) +
+  scale_fill_brewer(palette = "Dark2")
+
+### Posts by Type
+dat %>%
+  group_by(`Is Bottom`, `Post Type`) %>%
+  summarise(Posts = n()) -> agg8
+agg8$`Post Type` <- factor(agg8$`Post Type`, levels = agg8$`Post Type`[c(2,3,4,1,5)])
+
+gg8 <- ggplot(agg8, mapping = aes(x = `Post Type`, y = Posts, fill = `Is Bottom`)) +
+  geom_bar(stat = "identity") + 
+  scale_fill_brewer(palette = "Dark2")
+```
+
+**Low engagement posts vs remainder**
+```{r, echo=F}
+cowplot::plot_grid(gg5, gg6, gg7, gg8, 
+                     ncol = 2, nrow = 2,
+                     labels = c(5,6,7,8))
+```
+
+## Engagement over time
+
+There is a strong seasonal effect on the mean number of engagements with a relatively weak increase month after month at a rate of about 3.75 engagements per post year over year.
+
+```{r, eval=T, include=F}
+dat %>%
+  group_by(`Year Month`) %>%
+  summarise(Posts = n(),
+            `Mean Engagements` = mean(Engagements)) -> agg9
+
+gg9 <- ggplot(agg9, mapping = aes(x = `Year Month`, y = `Mean Engagements`)) +
+  geom_bar(stat = "identity") + 
+  geom_smooth(se=F) +
+  geom_smooth(method = "lm", se=F, color="black", formula = y ~ x, ) +
+  scale_fill_brewer(palette = "Dark2")
+
+agg9$YearMonthNum <- 1:nrow(agg9)
+lm(`Mean Engagements` ~ YearMonthNum, data = agg9)
+.312 * 12 # Year over year
+```
+
+**Engagement over time -- CSN stations**
+```{r, echo=F}
+cowplot::plot_grid(gg9, labels = 9)
+```
+
+Comparing the CSN stations with non-CSN stations we notice far less of seasonal effect which is shocking, we also notice a steep drop in mean engagements over time. The decrease is less pronounced after the initial drop.(10) We plot March 2018 to March 2019 for clearer comparison, finding that non-CSN stations decrease at a rate of about -1.0 engagements per post year over year.
+```{r, eval=T, include=F}
+notCSN <- bound_data %>% 
+  filter(IsCsnStation == "not CSN") # ~29k x 39 var 
+
+notCSN <- rename(.data = notCSN, `Year Month` = YearMonth)
+
+notCSN %>%
+  group_by(`Year Month`) %>%
+  summarise(Posts = n(),
+            `Mean Engagements` = mean(Engagements)) -> agg10
+
+gg10 <- ggplot(agg10, mapping = aes(x = `Year Month`, y = `Mean Engagements`)) +
+  geom_bar(stat = "identity") + 
+  geom_smooth(se=F) +
+  geom_smooth(method = "lm", se=F, color="black", formula = y ~ x, ) +
+  scale_fill_brewer(palette = "Dark2")
+
+agg10$YearMonthNum <- 1:nrow(agg10)
+lm(`Mean Engagements` ~ YearMonthNum, data = agg10)
+-1 # Year over year from march to march
+
+### march to march
+agg11 <- agg10[-1:-3, ]
+
+gg11 <- ggplot(agg11, mapping = aes(x = `Year Month`, y = `Mean Engagements`)) +
+  geom_bar(stat = "identity") + 
+  geom_smooth(se=F) +
+  geom_smooth(method = "lm", se=F, color="black", formula = y ~ x, ) +
+  scale_fill_brewer(palette = "Dark2")
+
+gg11
+
+1 * 12 # Year over year
+```
+
+**Engagement over time -- non-CSN stations**
+
+```{r, echo=F}
+cowplot::plot_grid(gg10, gg11, ncol = 2, labels = c(10, 11))
+```
